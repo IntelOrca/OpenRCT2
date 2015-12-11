@@ -78,7 +78,7 @@ Includes all git commit authors. Aliases are GitHub user names.
 * Fixing unmaintained languages: Michael Steenbeek (Gymnasiast)
 * English (UK) - Ted John (IntelOrca), (Tinytimrob)
 * English (US) - Ted John (IntelOrca), Michael Steenbeek (Gymnasiast)
-* Dutch - Michael Steenbeek (Gymnasiast), (xzbobzx), (mrtnptrs), Thomas den Hollander (ThomasdenH), (hostbrute); reviewing and discussion: Aaron van Geffen (AaronVanGeffen), (Balletie) and Sijmen Schoon (Vijfhoek).
+* Dutch - Michael Steenbeek (Gymnasiast), (xzbobzx), (mrtnptrs), Thomas den Hollander (ThomasdenH), (hostbrute), (Corsleutel); reviewing and discussion: Aaron van Geffen (AaronVanGeffen), (Balletie) and Sijmen Schoon (Vijfhoek).
 * Finnish - (DJHasis)
 * French - (fbourigault), Joël Troch (JoelTroch), Michael Steenbeek (Gymnasiast)
 * German - (danidoedel), (atmaxinger), (Yepoleb), Daniel Kessel (dkessel), Leon (AllGoodNamesAreTaken)
