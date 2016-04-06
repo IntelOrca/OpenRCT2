@@ -1,6 +1,8 @@
 #ifndef _OPENRCT2_BREAKPAD_
 #define _OPENRCT2_BREAKPAD_
 
+#define USE_BREAKPAD
+
 #ifdef USE_BREAKPAD
 typedef void* CExceptionHandler;
 

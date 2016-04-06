@@ -87,6 +87,7 @@
     <ClCompile Include="src\openrct2.c" />
     <ClCompile Include="src\peep\peep.c" />
     <ClCompile Include="src\peep\staff.c" />
+    <ClCompile Include="src\platform\breakpad.cpp" />
     <ClCompile Include="src\platform\linux.c" />
     <ClCompile Include="src\platform\posix.c" />
     <ClCompile Include="src\platform\shared.c" />
@@ -261,6 +262,7 @@
     <ClInclude Include="src\openrct2.h" />
     <ClInclude Include="src\peep\peep.h" />
     <ClInclude Include="src\peep\staff.h" />
+    <ClInclude Include="src\platform\breakpad.h" />
     <ClInclude Include="src\platform\platform.h" />
     <ClInclude Include="src\rct1.h" />
     <ClInclude Include="src\rct2.h" />

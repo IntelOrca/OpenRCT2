@@ -1,8 +1,17 @@
 #include "breakpad.h"
 
+#include <SDL_platform.h>
+
 #ifdef USE_BREAKPAD
-#include "client/linux/handler/exception_handler.h"
 #include <stdio.h>
+
+#ifdef __LINUX__
+#include <breakpad/client/linux/handler/exception_handler.h>
+#endif __LINUX__
+
+#ifdef __WINDOWS__
+#include <breakpad/client/windows/handler/exception_handler.h>
+#endif __WINDOWS__
 
 static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded) {
 	  printf("Dump path: %s\n", descriptor.path());
@@ -16,4 +25,6 @@ extern "C" CExceptionHandler newCExceptionHandlerSimple(void)
 	//google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);
 	return reinterpret_cast<void*>(new google_breakpad::ExceptionHandler(descriptor, NULL, dumpCallback, NULL, true, -1));
 }
+
+
 #endif // USE_BREAKPAD
