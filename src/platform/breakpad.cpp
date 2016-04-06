@@ -7,10 +7,12 @@
 
 #ifdef __LINUX__
 #include <breakpad/client/linux/handler/exception_handler.h>
+#define BREAKPAD_PATH "/tmp"
 #endif __LINUX__
 
 #ifdef __WINDOWS__
 #include <breakpad/client/windows/handler/exception_handler.h>
+#define BREAKPAD_PATH "."
 #endif __WINDOWS__
 
 static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded) {
@@ -21,7 +23,8 @@ static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, 
 extern "C" CExceptionHandler newCExceptionHandlerSimple(void)
 {
 	printf("init Simple breakpad\n");
-	google_breakpad::MinidumpDescriptor descriptor("/tmp");
+	// Path must exist and be RW!
+	google_breakpad::MinidumpDescriptor descriptor(BREAKPAD_PATH);
 	//google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);
 	return reinterpret_cast<void*>(new google_breakpad::ExceptionHandler(descriptor, NULL, dumpCallback, NULL, true, -1));
 }
