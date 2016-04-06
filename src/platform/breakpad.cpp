@@ -15,10 +15,10 @@
 #define BREAKPAD_PATH "."
 #endif __WINDOWS__
 
-static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded) {
+/*static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded) {
 	  printf("Dump path: %s\n", descriptor.path());
 	  return succeeded;
-}
+}*/
 
 extern "C" CExceptionHandler newCExceptionHandlerSimple(void)
 {
