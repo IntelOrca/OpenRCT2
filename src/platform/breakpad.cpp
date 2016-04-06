@@ -24,9 +24,17 @@ extern "C" CExceptionHandler newCExceptionHandlerSimple(void)
 {
 	printf("init Simple breakpad\n");
 	// Path must exist and be RW!
-	google_breakpad::MinidumpDescriptor descriptor(BREAKPAD_PATH);
+	//google_breakpad::MinidumpDescriptor descriptor(BREAKPAD_PATH);
 	//google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);
-	return reinterpret_cast<void*>(new google_breakpad::ExceptionHandler(descriptor, NULL, dumpCallback, NULL, true, -1));
+	return reinterpret_cast<void*>(new google_breakpad::ExceptionHandler(
+	                                   L"dumps\\",
+	                                   0,
+	                                   0,
+	                                   0,
+	                                   google_breakpad::ExceptionHandler::HANDLER_ALL,
+	                                   MiniDumpNormal,
+	                                   L"",
+	                                   0 ));
 }
 
 
