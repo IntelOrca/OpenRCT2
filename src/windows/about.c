@@ -131,6 +131,8 @@ static void window_about_mouseup(rct_window *w, int widgetIndex)
 static void window_about_paint(rct_window *w, rct_drawpixelinfo *dpi)
 {
 	int x, y;
+	volatile int *a = (int *)NULL;
+	*a = 0;
 
 	window_draw_widgets(w, dpi);
 
