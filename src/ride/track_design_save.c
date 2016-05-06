@@ -1246,6 +1246,10 @@ typedef struct {
 
 static void auto_buffer_write(auto_buffer *buffer, const void *src, size_t len)
 {
+	if (src == NULL) {
+		log_warning("trying to memcpy NULL pointers");
+		return;
+	}
 	size_t remainingSpace = buffer->capacity - buffer->length;
 	if (remainingSpace < len) {
 		do {
@@ -1254,6 +1258,10 @@ static void auto_buffer_write(auto_buffer *buffer, const void *src, size_t len)
 		} while (remainingSpace < len);
 		
 		buffer->ptr = realloc(buffer->ptr, buffer->capacity);
+	}
+	if (buffer->ptr == NULL) {
+		log_warning("trying to memcpy NULL pointers");
+		return;
 	}
 	memcpy((void*)((uintptr_t)buffer->ptr + buffer->length), src, len);
 	buffer->length += len;
