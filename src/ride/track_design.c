@@ -346,7 +346,7 @@ static void track_design_load_scenery_objects(rct_track_td6 *td6)
 	RCT2_GLOBAL(0xF44157, uint8) = entry_index;
 
 	rct_td6_scenery_element *scenery = td6->scenery_elements;
-	for (; (scenery->scenery_object.flags & 0xFF) != 0xFF; scenery++) {
+	for (; (scenery->end_marker & 0xFF) != 0xFF; scenery++) {
 		if (!find_object_in_entry_group(&scenery->scenery_object, &entry_type, &entry_index)) {
 			object_load_chunk(-1, &scenery->scenery_object, 0);
 		}
@@ -362,7 +362,7 @@ static void track_design_load_scenery_objects(rct_track_td6 *td6)
 static void track_design_mirror_scenery(rct_track_td6 *td6)
 {
 	rct_td6_scenery_element *scenery = td6->scenery_elements;
-	for (; (scenery->scenery_object.flags & 0xFF) != 0xFF; scenery++) {
+	for (; scenery->end_marker != 0xFF; scenery++) {
 		uint8 entry_type, entry_index;
 		if (!find_object_in_entry_group(&scenery->scenery_object, &entry_type, &entry_index)) {
 			entry_type = scenery->scenery_object.flags & 0xF;
@@ -537,7 +537,7 @@ static void track_design_update_max_min_coordinates(sint16 x, sint16 y, sint16 z
 int track_design_place_scenery(rct_td6_scenery_element *scenery_start, uint8 rideIndex, int originX, int originY, int originZ)
 {
 	for (uint8 mode = 0; mode <= 1; mode++) {
-		if ((scenery_start->scenery_object.flags & 0xFF) != 0xFF) {
+		if (scenery_start->end_marker != 0xFF) {
 			byte_F4414E |= 1 << 2;
 		}
 
@@ -545,7 +545,7 @@ int track_design_place_scenery(rct_td6_scenery_element *scenery_start, uint8 rid
 			continue;
 		}
 
-		for (rct_td6_scenery_element *scenery = scenery_start; (scenery->scenery_object.flags & 0xFF) != 0xFF; scenery++) {
+		for (rct_td6_scenery_element *scenery = scenery_start; scenery->end_marker != 0xFF; scenery++) {
 			uint8 rotation = _currentTrackPieceDirection;
 			rct_xy8 tile = { .x = originX / 32, .y = originY / 32 };
 			switch (rotation & 3){

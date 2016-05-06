@@ -58,7 +58,10 @@ typedef struct {
 
 /* Track Scenery entry  size: 0x16 */
 typedef struct {
-	rct_object_entry scenery_object;	// 0x00
+	union {
+		uint8 end_marker;
+		rct_object_entry scenery_object;	// 0x00
+	};
 	sint8 x;							// 0x10
 	sint8 y;							// 0x11
 	sint8 z;							// 0x12

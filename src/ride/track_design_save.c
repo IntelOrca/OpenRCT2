@@ -657,7 +657,7 @@ static bool track_design_save_copy_scenery_to_td6(rct_track_td6 *td6)
 	size_t totalSceneryElementsSize = _trackSavedMapElementsDescCount * sizeof(rct_td6_scenery_element);
 	td6->scenery_elements = malloc(totalSceneryElementsSize + 1);
 	memcpy(td6->scenery_elements, _trackSavedMapElementsDesc, totalSceneryElementsSize);
-	*((uint8*)&td6->scenery_elements[_trackSavedMapElementsDescCount]) = 0xFF;
+	td6->scenery_elements[_trackSavedMapElementsDescCount].end_marker = 0xFF;
 
 	// Run an element loop
 	for (size_t i = 0; i < _trackSavedMapElementsDescCount; i++) {
@@ -1230,7 +1230,7 @@ static size_t track_design_get_scenery_elements_count(rct_track_td6 *td6)
 	size_t count = 0;
 	rct_td6_scenery_element *sceneryElement = td6->scenery_elements;
 	if (sceneryElement != NULL) {
-		while ((sceneryElement->scenery_object.flags & 0xFF) != 0xFF) {
+		while ((sceneryElement->end_marker) != 0xFF) {
 			count++;
 			sceneryElement++;
 		}
