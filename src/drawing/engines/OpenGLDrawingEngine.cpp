@@ -62,10 +62,32 @@ struct vec4f
     union { float w; float q; float a; };
 };
 
+class OpenGLDrawingFunctions {
+private:
+    template <typename T>
+    static inline void SetProc(const T &var, const char * name) {
+        const_cast<T &>(var) = (T) SDL_GL_GetProcAddress(name);
+    }
+    
+public:
+    const PFNGLCREATESHADERPROC CreateShader = nullptr;
+    const PFNGLSHADERSOURCEPROC ShaderSource = nullptr;
+    const PFNGLCOMPILESHADERPROC CompileShader = nullptr;
+    const PFNGLDELETESHADERPROC DeleteShader = nullptr;
+    
+    void UpdatePointers() {
+        SetProc(CreateShader, "glCreateShader");
+        SetProc(ShaderSource, "glShaderSource");
+        SetProc(CompileShader, "glCompileShader");
+        SetProc(DeleteShader, "glDeleteShader");
+    }
+};
+
 class OpenGLDrawingContext : public IDrawingContext
 {
 private:
     OpenGLDrawingEngine *   _engine;
+    OpenGLDrawingFunctions &gl;
     rct_drawpixelinfo *     _dpi;
 
     sint32 _offsetX;
@@ -120,6 +142,7 @@ private:
 public:
     SDL_Color Palette[256];
     vec4f     GLPalette[256];
+    OpenGLDrawingFunctions gl;
 
     OpenGLDrawingEngine()
     {
@@ -140,6 +163,8 @@ public:
 
         _context = SDL_GL_CreateContext(_window);
         SDL_GL_MakeCurrent(_window, _context);
+        gl.UpdatePointers();
+        // now you can call gl.CreateShader() and etc.
 
         if (!OpenGLAPI::Initialise())
         {
@@ -303,9 +328,8 @@ IDrawingEngine * DrawingEngineFactory::CreateOpenGL()
     return new OpenGLDrawingEngine();
 }
 
-OpenGLDrawingContext::OpenGLDrawingContext(OpenGLDrawingEngine * engine)
+OpenGLDrawingContext::OpenGLDrawingContext(OpenGLDrawingEngine * engine) : _engine(engine), gl(engine->gl)
 {
-    _engine = engine;
 }
 
 OpenGLDrawingContext::~OpenGLDrawingContext()
