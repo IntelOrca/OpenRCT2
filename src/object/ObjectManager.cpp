@@ -174,6 +174,17 @@ public:
         {
             for (int i = 0; i < OBJECT_ENTRY_COUNT; i++)
             {
+                if (_loadedObjects[i] != nullptr)
+                {
+                    for (int j = i + 1; j < OBJECT_ENTRY_COUNT; j++)
+                    {
+                        if (_loadedObjects[j] == _loadedObjects[i])
+                        {
+                            Console::Error::WriteFormat("Duplicate found for %p", _loadedObjects[i]);
+                            Console::Error::WriteLine();
+                        }
+                    }
+                }
                 UnloadObject(_loadedObjects[i]);
             }
         }
