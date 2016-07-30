@@ -76,10 +76,9 @@ typedef struct rct_ride_entry_vehicle {
 	uint8 draw_order;
 	uint8 special_frames;			// 0x60 , 0x7A
 	sint8* peep_loading_positions;	// 0x61 , 0x7B
+	uint8 peep_loading_positions_size;
 } rct_ride_entry_vehicle;
-#ifdef PLATFORM_32BIT
-assert_struct_size(rct_ride_entry_vehicle, 0x65);
-#endif
+
 
 typedef struct rct_vehicle {
 	uint8 sprite_identifier;		// 0x00

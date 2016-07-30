@@ -108,6 +108,7 @@ void RideObject::ReadLegacy(IReadObjectContext * context, IStream * stream)
             numPeepLoadingPositions = stream->ReadValue<uint16>();
         }
         _peepLoadingPositions[i] = stream->ReadArray<sint8>(numPeepLoadingPositions);
+        _legacyType.vehicles[i].peep_loading_positions_size = numPeepLoadingPositions;
     }
 
     GetImageTable()->Read(context, stream);
