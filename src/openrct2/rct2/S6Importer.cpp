@@ -97,7 +97,7 @@ public:
         _s6Path = path;
     }
 
-    void LoadFromStream(IStream * stream, bool isScenario)
+    void LoadFromStream(IStream * stream, bool isScenario) override
     {
         if (!gConfigGeneral.allow_loading_with_incorrect_checksum && !SawyerEncoding::ValidateChecksum(stream))
         {
@@ -159,7 +159,7 @@ public:
         return false;
     }
 
-    void Import()
+    void Import() override
     {
         Initialise();
 
