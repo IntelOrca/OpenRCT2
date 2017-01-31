@@ -2459,7 +2459,7 @@ private:
     }
 };
 
-IParkImporter * CreateS4Importer()
+IParkImporter * ParkImporter::CreateS4()
 {
     return new S4Importer();
 }
