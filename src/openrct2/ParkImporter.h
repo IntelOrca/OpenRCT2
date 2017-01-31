@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <string>
 #include "common.h"
 #include "scenario/ScenarioRepository.h"
 
@@ -38,3 +39,4 @@ public:
 
 IParkImporter * CreateS4Importer();
 IParkImporter * CreateS6Importer();
+IParkImporter * CreateParkImporterForPath(const std::string &path);
