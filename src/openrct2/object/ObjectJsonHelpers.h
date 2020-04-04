@@ -33,6 +33,7 @@ namespace ObjectJsonHelpers
     std::vector<int32_t> GetJsonIntegerArray(const json_t* arr);
     colour_t ParseColour(const std::string_view& s, colour_t defaultValue = COLOUR_BLACK);
     uint8_t ParseCursor(const std::string& s, uint8_t defaultValue);
+    uint8_t ParseRideType(const std::string& s);
     rct_object_entry ParseObjectEntry(const std::string& s);
     void LoadStrings(const json_t* root, StringTable& stringTable);
     void LoadImages(IReadObjectContext* context, const json_t* root, ImageTable& imageTable);

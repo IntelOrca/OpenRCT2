@@ -32,6 +32,7 @@
 #include "../management/Marketing.h"
 #include "../management/NewsItem.h"
 #include "../network/network.h"
+#include "../object/MusicObject.h"
 #include "../object/ObjectList.h"
 #include "../object/ObjectManager.h"
 #include "../object/StationObject.h"
@@ -2828,10 +2829,15 @@ static void ride_music_update(Ride* ride)
     // Select random tune from available tunes for a music style (of course only merry-go-rounds have more than one tune)
     if (ride->music_tune_id == 255)
     {
-        const auto& musicStyleTunes = gRideMusicStyleTuneIds[ride->music];
-        auto numTunes = musicStyleTunes.size();
-        ride->music_tune_id = musicStyleTunes[util_rand() % numTunes];
-        ride->music_position = 0;
+        auto& objManager = GetContext()->GetObjectManager();
+        auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(OBJECT_TYPE_MUSIC, ride->music));
+        if (musicObj != nullptr)
+        {
+            auto numTracks = musicObj->GetTrackCount();
+            auto randomTrackIndex = util_rand() % numTracks;
+            ride->music_tune_id = (uint8_t)randomTrackIndex;
+            ride->music_position = 0;
+        }
         return;
     }
 
@@ -3616,6 +3622,20 @@ int32_t ride_music_params_update(
     return position;
 }
 
+static void ConfigureRideMusic(rct_ride_music& rideMusic, const rct_ride_music_params& params)
+{
+    rideMusic.volume = params.volume;
+    rideMusic.pan = params.pan;
+    rideMusic.frequency = params.frequency;
+    rideMusic.ride_id = params.ride_id;
+    rideMusic.tune_id = params.tune_id;
+    Mixer_Channel_Volume(rideMusic.sound_channel, DStoMixerVolume(rideMusic.volume));
+    Mixer_Channel_Pan(rideMusic.sound_channel, DStoMixerPan(rideMusic.pan));
+    Mixer_Channel_Rate(rideMusic.sound_channel, DStoMixerRate(rideMusic.frequency));
+    int32_t offset = std::max(0, params.offset - 10000);
+    Mixer_Channel_SetOffset(rideMusic.sound_channel, offset);
+}
+
 /**
  *  Play/update ride music based on structs updated in 0x006BC3AC
  *  rct2: 0x006BC6D8
@@ -3672,26 +3692,32 @@ void ride_music_update_final()
                 channelIndex++;
                 if (channelIndex >= AUDIO_MAX_RIDE_MUSIC)
                 {
-                    rct_ride_music_info* ride_music_info = &gRideMusicInfoList[rideMusicParams->tune_id];
-                    rct_ride_music* ride_music_3 = &gRideMusicList[freeChannelIndex];
-                    ride_music_3->sound_channel = Mixer_Play_Music(ride_music_info->path_id, MIXER_LOOP_NONE, true);
-                    if (ride_music_3->sound_channel)
+                    auto ride = get_ride(rideMusicParams->ride_id);
+                    if (ride->type == RIDE_TYPE_CIRCUS)
                     {
-                        ride_music_3->volume = rideMusicParams->volume;
-                        ride_music_3->pan = rideMusicParams->pan;
-                        ride_music_3->frequency = rideMusicParams->frequency;
-                        ride_music_3->ride_id = rideMusicParams->ride_id;
-                        ride_music_3->tune_id = rideMusicParams->tune_id;
-                        Mixer_Channel_Volume(ride_music_3->sound_channel, DStoMixerVolume(ride_music_3->volume));
-                        Mixer_Channel_Pan(ride_music_3->sound_channel, DStoMixerPan(ride_music_3->pan));
-                        Mixer_Channel_Rate(ride_music_3->sound_channel, DStoMixerRate(ride_music_3->frequency));
-                        int32_t offset = std::max(0, rideMusicParams->offset - 10000);
-                        Mixer_Channel_SetOffset(ride_music_3->sound_channel, offset);
-
-                        // Move circus music to the sound mixer group
-                        if (ride_music_info->path_id == PATH_ID_CSS24)
+                        auto ride_music_3 = &gRideMusicList[freeChannelIndex];
+                        ride_music_3->sound_channel = Mixer_Play_Music(PATH_ID_CSS24, MIXER_LOOP_NONE, true);
+                        if (ride_music_3->sound_channel != nullptr)
                         {
+                            ConfigureRideMusic(*ride_music_3, *rideMusicParams);
+
+                            // Move circus music to the sound mixer group
                             Mixer_Channel_SetGroup(ride_music_3->sound_channel, Audio::MixerGroup::Sound);
+                        }
+                    }
+                    else
+                    {
+                        auto& objManager = GetContext()->GetObjectManager();
+                        auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(OBJECT_TYPE_MUSIC, ride->music));
+                        if (musicObj != nullptr)
+                        {
+                            auto trackSource = musicObj->GetTrackSource(rideMusicParams->tune_id);
+                            auto ride_music_3 = &gRideMusicList[freeChannelIndex];
+                            ride_music_3->sound_channel = Mixer_Play_Music(trackSource.c_str(), MIXER_LOOP_NONE);
+                            if (ride_music_3->sound_channel != nullptr)
+                            {
+                                ConfigureRideMusic(*ride_music_3, *rideMusicParams);
+                            }
                         }
                     }
                     return;

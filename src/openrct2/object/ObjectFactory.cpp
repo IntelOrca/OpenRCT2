@@ -25,6 +25,7 @@
 #include "FootpathItemObject.h"
 #include "FootpathObject.h"
 #include "LargeSceneryObject.h"
+#include "MusicObject.h"
 #include "Object.h"
 #include "ObjectLimits.h"
 #include "ObjectList.h"
@@ -314,6 +315,9 @@ namespace ObjectFactory
             case OBJECT_TYPE_STATION:
                 result = new StationObject(entry);
                 break;
+            case OBJECT_TYPE_MUSIC:
+                result = new MusicObject(entry);
+                break;
             default:
                 throw std::runtime_error("Invalid object type");
         }
@@ -348,6 +352,8 @@ namespace ObjectFactory
             return OBJECT_TYPE_TERRAIN_EDGE;
         if (s == "station")
             return OBJECT_TYPE_STATION;
+        if (s == "music")
+            return OBJECT_TYPE_MUSIC;
         return 0xFF;
     }
 

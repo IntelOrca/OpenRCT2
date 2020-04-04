@@ -267,6 +267,19 @@ public:
         LoadObject("#RCT2STP");
         LoadObject("#RCT2STE");
         LoadObject("#ORCT2SN");
+
+        // Music
+        auto numObjects = _objectRepository.GetNumObjects();
+        auto objects = _objectRepository.GetObjects();
+        for (size_t i = 0; i < numObjects; i++)
+        {
+            auto obj = objects[i];
+            if (obj.ObjectEntry.GetType() == OBJECT_TYPE_MUSIC)
+            {
+                auto name = std::string(obj.ObjectEntry.GetName());
+                LoadObject(name);
+            }
+        }
     }
 
     static rct_string_id GetObjectSourceGameString(const uint8_t sourceGame)
