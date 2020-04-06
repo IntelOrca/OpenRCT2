@@ -45,6 +45,7 @@ struct IFileDataRetriever
 {
     virtual ~IFileDataRetriever() = default;
     virtual std::vector<uint8_t> GetData(const std::string_view& path) const abstract;
+    virtual ObjectAsset GetAsset(const std::string_view& path) const abstract;
 };
 
 class FileSystemDataRetriever : public IFileDataRetriever
@@ -60,8 +61,14 @@ public:
 
     std::vector<uint8_t> GetData(const std::string_view& path) const override
     {
-        auto absolutePath = Path::Combine(_basePath, path.data());
+        auto absolutePath = Path::Combine(_basePath, path);
         return File::ReadAllBytes(absolutePath);
+    }
+
+    ObjectAsset GetAsset(const std::string_view& path) const override
+    {
+        auto absolutePath = Path::Combine(_basePath, path);
+        return ObjectAsset(absolutePath);
     }
 };
 
@@ -79,6 +86,11 @@ public:
     std::vector<uint8_t> GetData(const std::string_view& path) const override
     {
         return _zipArchive.GetFileData(path);
+    }
+
+    ObjectAsset GetAsset(const std::string_view& path) const override
+    {
+        throw std::runtime_error("Not implemented");
     }
 };
 
@@ -134,6 +146,15 @@ public:
         if (_fileDataRetriever != nullptr)
         {
             return _fileDataRetriever->GetData(path);
+        }
+        return {};
+    }
+
+    ObjectAsset GetAsset(const std::string_view& path) override
+    {
+        if (_fileDataRetriever != nullptr)
+        {
+            return _fileDataRetriever->GetAsset(path);
         }
         return {};
     }

@@ -23,6 +23,8 @@
 
 #include <memory>
 
+using namespace OpenRCT2;
+
 void MusicObject::Load()
 {
     GetStringTable().Sort();
@@ -43,7 +45,7 @@ void MusicObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t hei
     gfx_draw_string_centred(dpi, STR_WINDOW_NO_IMAGE, x, y, COLOUR_BLACK, nullptr);
 }
 
-void MusicObject::ReadJson([[maybe_unused]] IReadObjectContext* context, const json_t* root)
+void MusicObject::ReadJson(IReadObjectContext* context, const json_t* root)
 {
     _rideTypes.clear();
     _tracks.clear();
@@ -60,7 +62,7 @@ void MusicObject::ReadJson([[maybe_unused]] IReadObjectContext* context, const j
         auto jTracks = json_object_get(properties, "tracks");
         if (json_is_array(jTracks))
         {
-            ParseTracks(jTracks);
+            ParseTracks(*context, jTracks);
         }
     }
 
@@ -85,7 +87,7 @@ void MusicObject::ParseRideTypes(const json_t* jRideTypes)
     }
 }
 
-void MusicObject::ParseTracks(const json_t* jTracks)
+void MusicObject::ParseTracks(IReadObjectContext& context, const json_t* jTracks)
 {
     size_t index;
     const json_t* jTrack;
@@ -95,8 +97,16 @@ void MusicObject::ParseTracks(const json_t* jTracks)
         {
             MusicObjectTrack track;
             track.Name = ObjectJsonHelpers::GetString(jTrack, "name");
-            track.Path = ObjectJsonHelpers::GetString(jTrack, "source");
-            _tracks.push_back(std::move(track));
+            auto source = ObjectJsonHelpers::GetString(jTrack, "source");
+            if (source.empty())
+            {
+                context.LogError(OBJECT_ERROR_INVALID_PROPERTY, "Invalid audio track definition.");
+            }
+            else
+            {
+                track.Asset = GetAsset(context, source);
+                _tracks.push_back(std::move(track));
+            }
         }
     }
 }
@@ -120,21 +130,26 @@ size_t MusicObject::GetTrackCount() const
     return _tracks.size();
 }
 
-std::string MusicObject::GetTrackSource(size_t trackIndex) const
+const MusicObjectTrack* MusicObject::GetTrack(size_t trackIndex) const
 {
-    using namespace OpenRCT2;
-
     if (_tracks.size() > trackIndex)
     {
-        auto& track = _tracks[trackIndex];
-        if (track.Path.find("$RCT2:DATA/") == 0)
-        {
-            auto platformEnvironment = GetContext()->GetPlatformEnvironment();
-            auto dir = platformEnvironment->GetDirectoryPath(DIRBASE::RCT2, DIRID::DATA);
-            auto path = Path::Combine(dir, track.Path.substr(11));
-            return path;
-        }
-        return track.Path;
+        return &_tracks[trackIndex];
     }
     return {};
+}
+
+ObjectAsset MusicObject::GetAsset(IReadObjectContext& context, const std::string_view& path)
+{
+    if (path.find("$RCT2:DATA/") == 0)
+    {
+        auto platformEnvironment = GetContext()->GetPlatformEnvironment();
+        auto dir = platformEnvironment->GetDirectoryPath(DIRBASE::RCT2, DIRID::DATA);
+        auto path2 = Path::Combine(dir, std::string(path.substr(11)));
+        return ObjectAsset(path2);
+    }
+    else
+    {
+        return context.GetAsset(path);
+    }
 }

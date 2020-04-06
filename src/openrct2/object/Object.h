@@ -143,6 +143,29 @@ struct ObjectRepositoryItem;
 struct rct_drawpixelinfo;
 struct json_t;
 
+class ObjectAsset
+{
+private:
+    std::string _path;
+
+public:
+    ObjectAsset() = default;
+    ObjectAsset(const std::string& path)
+        : _path(path)
+    {
+    }
+
+    bool IsFile() const
+    {
+        return !_path.empty();
+    }
+
+    std::string GetPath() const
+    {
+        return _path;
+    }
+};
+
 struct IReadObjectContext
 {
     virtual ~IReadObjectContext() = default;
@@ -151,6 +174,7 @@ struct IReadObjectContext
     virtual IObjectRepository& GetObjectRepository() abstract;
     virtual bool ShouldLoadImages() abstract;
     virtual std::vector<uint8_t> GetData(const std::string_view& path) abstract;
+    virtual ObjectAsset GetAsset(const std::string_view& path) abstract;
 
     virtual void LogWarning(uint32_t code, const utf8* text) abstract;
     virtual void LogError(uint32_t code, const utf8* text) abstract;

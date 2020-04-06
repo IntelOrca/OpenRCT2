@@ -18,7 +18,7 @@ class MusicObjectTrack
 {
 public:
     std::string Name;
-    std::string Path;
+    ObjectAsset Asset;
 };
 
 class MusicObject final : public Object
@@ -43,9 +43,10 @@ public:
 
     bool SupportsRideType(uint8_t rideType);
     size_t GetTrackCount() const;
-    std::string GetTrackSource(size_t trackIndex) const;
+    const MusicObjectTrack* GetTrack(size_t trackIndex) const;
 
 private:
     void ParseRideTypes(const json_t* jRideTypes);
-    void ParseTracks(const json_t* jTracks);
+    void ParseTracks(IReadObjectContext& context, const json_t* jTracks);
+    static ObjectAsset GetAsset(IReadObjectContext& context, const std::string_view& path);
 };

@@ -3711,12 +3711,19 @@ void ride_music_update_final()
                         auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(OBJECT_TYPE_MUSIC, ride->music));
                         if (musicObj != nullptr)
                         {
-                            auto trackSource = musicObj->GetTrackSource(rideMusicParams->tune_id);
-                            auto ride_music_3 = &gRideMusicList[freeChannelIndex];
-                            ride_music_3->sound_channel = Mixer_Play_Music(trackSource.c_str(), MIXER_LOOP_NONE);
-                            if (ride_music_3->sound_channel != nullptr)
+                            auto track = musicObj->GetTrack(rideMusicParams->tune_id);
+                            if (track != nullptr)
                             {
-                                ConfigureRideMusic(*ride_music_3, *rideMusicParams);
+                                if (track->Asset.IsFile())
+                                {
+                                    auto assetPath = std::string(track->Asset.GetPath());
+                                    auto ride_music_3 = &gRideMusicList[freeChannelIndex];
+                                    ride_music_3->sound_channel = Mixer_Play_Music(assetPath.c_str(), MIXER_LOOP_NONE);
+                                    if (ride_music_3->sound_channel != nullptr)
+                                    {
+                                        ConfigureRideMusic(*ride_music_3, *rideMusicParams);
+                                    }
+                                }
                             }
                         }
                     }
