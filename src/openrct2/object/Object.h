@@ -149,33 +149,22 @@ struct json_t;
 class ObjectAsset
 {
 private:
+    std::string _zipPath;
     std::string _path;
 
 public:
     ObjectAsset() = default;
-    ObjectAsset(const std::string& path)
+    ObjectAsset(const std::string_view& path)
         : _path(path)
     {
     }
-
-    bool IsFile() const
+    ObjectAsset(const std::string_view& zipPath, const std::string_view& path)
+        : _zipPath(zipPath)
+        , _path(path)
     {
-        return !_path.empty();
     }
 
-    std::string GetPath() const
-    {
-        return _path;
-    }
-
-    std::unique_ptr<std::istream> GetStream() const
-    {
-        if (IsFile())
-        {
-            return std::make_unique<std::ifstream>(_path, std::ios::binary);
-        }
-        return {};
-    }
+    std::unique_ptr<std::istream> GetStream() const;
 };
 
 struct IReadObjectContext

@@ -75,11 +75,13 @@ public:
 class ZipDataRetriever : public IFileDataRetriever
 {
 private:
+    const std::string _path;
     const IZipArchive& _zipArchive;
 
 public:
-    ZipDataRetriever(const IZipArchive& zipArchive)
-        : _zipArchive(zipArchive)
+    ZipDataRetriever(const std::string_view& path, const IZipArchive& zipArchive)
+        : _path(path)
+        , _zipArchive(zipArchive)
     {
     }
 
@@ -90,7 +92,7 @@ public:
 
     ObjectAsset GetAsset(const std::string_view& path) const override
     {
-        throw std::runtime_error("Not implemented");
+        return ObjectAsset(_path, path);
     }
 };
 
@@ -397,7 +399,7 @@ namespace ObjectFactory
                 throw JsonException(&jsonLoadError);
             }
 
-            auto fileDataRetriever = ZipDataRetriever(*archive);
+            auto fileDataRetriever = ZipDataRetriever(path, *archive);
             Object* obj = CreateObjectFromJson(objectRepository, jRoot, &fileDataRetriever);
             json_decref(jRoot);
             return obj;
