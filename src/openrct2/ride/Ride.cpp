@@ -3714,15 +3714,12 @@ void ride_music_update_final()
                             auto track = musicObj->GetTrack(rideMusicParams->tune_id);
                             if (track != nullptr)
                             {
-                                if (track->Asset.IsFile())
+                                auto stream = track->Asset.GetStream();
+                                auto ride_music_3 = &gRideMusicList[freeChannelIndex];
+                                ride_music_3->sound_channel = Mixer_Play_Music(std::move(stream), MIXER_LOOP_NONE);
+                                if (ride_music_3->sound_channel != nullptr)
                                 {
-                                    auto assetPath = std::string(track->Asset.GetPath());
-                                    auto ride_music_3 = &gRideMusicList[freeChannelIndex];
-                                    ride_music_3->sound_channel = Mixer_Play_Music(assetPath.c_str(), MIXER_LOOP_NONE);
-                                    if (ride_music_3->sound_channel != nullptr)
-                                    {
-                                        ConfigureRideMusic(*ride_music_3, *rideMusicParams);
-                                    }
+                                    ConfigureRideMusic(*ride_music_3, *rideMusicParams);
                                 }
                             }
                         }
