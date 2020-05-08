@@ -566,7 +566,7 @@ declare global {
 
     /**
      * Network APIs
-     * Use `network.status` to determine whether the current game is a client, server or in single player mode.
+     * Use `network.mode` to determine whether the current game is a client, server or in single player mode.
      */
     interface Network {
         readonly mode: NetworkMode;
