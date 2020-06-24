@@ -5198,7 +5198,7 @@ static void window_ride_music_mousedown(rct_window* w, rct_widgetindex widgetInd
 static void window_ride_music_dropdown(rct_window* w, rct_widgetindex widgetIndex, int32_t dropdownIndex)
 {
     if (widgetIndex == WIDX_MUSIC_DROPDOWN && dropdownIndex >= 0
-        && dropdownIndex < window_ride_current_music_style_order.size())
+        && static_cast<size_t>(dropdownIndex) < window_ride_current_music_style_order.size())
     {
         auto musicStyle = window_ride_current_music_style_order[dropdownIndex];
         set_operating_setting(w->number, RideSetSetting::MusicType, musicStyle);

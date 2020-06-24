@@ -42,7 +42,7 @@ void MusicObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t hei
     // Write (no image)
     int32_t x = width / 2;
     int32_t y = height / 2;
-    gfx_draw_string_centred(dpi, STR_WINDOW_NO_IMAGE, x, y, COLOUR_BLACK, nullptr);
+    gfx_draw_string_centred(dpi, STR_WINDOW_NO_IMAGE, { x, y }, COLOUR_BLACK, nullptr);
 }
 
 void MusicObject::ReadJson(IReadObjectContext* context, const json_t* root)

@@ -229,7 +229,7 @@ namespace OpenRCT2::Audio
         rw->read = [](SDL_RWops* ctx, void* buf, size_t size, size_t maxnum) {
             auto ptr = static_cast<streamptr>(ctx->hidden.unknown.data1);
             (*ptr)->read((char*)buf, size * maxnum);
-            return (*ptr)->gcount() / size;
+            return static_cast<size_t>((*ptr)->gcount() / size);
         };
         rw->size = [](SDL_RWops* ctx) {
             auto ptr = static_cast<streamptr>(ctx->hidden.unknown.data1);

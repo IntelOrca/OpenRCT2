@@ -146,7 +146,7 @@ std::optional<uint8_t> rct_object_entry::GetSceneryType() const
     }
 }
 
-class zipstreamwrapper : public std::istream
+class zipstreamwrapper final : public std::istream
 {
 private:
     std::unique_ptr<IZipArchive> _zipArchive;
@@ -154,9 +154,9 @@ private:
 
 public:
     zipstreamwrapper(std::unique_ptr<IZipArchive> zipArchive, std::unique_ptr<std::istream> base)
-        : _zipArchive(std::move(zipArchive))
+        : std::istream(base->rdbuf())
+        , _zipArchive(std::move(zipArchive))
         , _base(std::move(base))
-        , std::istream(base->rdbuf())
     {
     }
 };

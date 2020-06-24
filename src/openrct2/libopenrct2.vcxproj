@@ -250,6 +250,7 @@
     <ClInclude Include="object\FootpathObject.h" />
     <ClInclude Include="object\ImageTable.h" />
     <ClInclude Include="object\LargeSceneryObject.h" />
+    <ClInclude Include="object\MusicObject.h" />
     <ClInclude Include="object\Object.h" />
     <ClInclude Include="object\ObjectFactory.h" />
     <ClInclude Include="object\ObjectJsonHelpers.h" />
@@ -572,6 +573,7 @@
     <ClCompile Include="object\FootpathObject.cpp" />
     <ClCompile Include="object\ImageTable.cpp" />
     <ClCompile Include="object\LargeSceneryObject.cpp" />
+    <ClCompile Include="object\MusicObject.cpp" />
     <ClCompile Include="object\Object.cpp" />
     <ClCompile Include="object\ObjectFactory.cpp" />
     <ClCompile Include="object\ObjectJsonHelpers.cpp" />

@@ -179,10 +179,10 @@ private:
         return result;
     }
 
-    class ifilestream : public std::istream
+    class ifilestream final : public std::istream
     {
     private:
-        class ifilestreambuf : public std::streambuf
+        class ifilestreambuf final : public std::streambuf
         {
         private:
             zip* _zip;
@@ -228,7 +228,7 @@ private:
                 }
 
                 zip_stat_t zipFileStat{};
-                if (!zip_stat_index(_zip, _index, 0, &zipFileStat) == ZIP_ER_OK)
+                if (zip_stat_index(_zip, _index, 0, &zipFileStat) != ZIP_ER_OK)
                 {
                     return false;
                 }
@@ -272,7 +272,7 @@ private:
                 }
             }
 
-            pos_type seekpos(pos_type pos, ios_base::openmode mode) override
+            pos_type seekpos(pos_type pos, ios_base::openmode mode) override final
             {
                 if (pos > _pos)
                 {
@@ -314,8 +314,8 @@ private:
 
     public:
         ifilestream(zip* zip, zip_int64_t index)
-            : _streambuf(zip, index)
-            , std::istream(&_streambuf, false)
+            : std::istream(&_streambuf)
+            , _streambuf(zip, index)
         {
         }
     };
