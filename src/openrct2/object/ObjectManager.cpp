@@ -269,16 +269,16 @@ public:
         LoadObject("#ORCT2SN");
 
         // Music
-        auto numObjects = _objectRepository.GetNumObjects();
-        auto objects = _objectRepository.GetObjects();
-        for (size_t i = 0; i < numObjects; i++)
+        int32_t slot = GetIndexFromTypeEntry(OBJECT_TYPE_MUSIC, 0);
+        for (int32_t i = 0; i < 33; i++)
         {
-            auto obj = objects[i];
-            if (obj.ObjectEntry.GetType() == OBJECT_TYPE_MUSIC)
+            if (i != MUSIC_STYLE_CIRCUS_SHOW)
             {
-                auto name = std::string(obj.ObjectEntry.GetName());
-                LoadObject(name);
+                char name[16]{};
+                snprintf(name, sizeof(name), "#MUSIC%02d", i);
+                LoadObject(slot, name);
             }
+            slot++;
         }
     }
 
@@ -321,6 +321,34 @@ private:
         rct_object_entry entry{};
         std::copy_n(name.c_str(), 8, entry.name);
         return LoadObject(&entry);
+    }
+
+    Object* LoadObject(int32_t slot, const std::string& name)
+    {
+        rct_object_entry entry{};
+        std::copy_n(name.c_str(), 8, entry.name);
+
+        Object* loadedObject = nullptr;
+        const ObjectRepositoryItem* ori = _objectRepository.FindObject(&entry);
+        if (ori != nullptr)
+        {
+            loadedObject = ori->LoadedObject;
+            if (loadedObject == nullptr)
+            {
+                loadedObject = GetOrLoadObject(ori);
+                if (loadedObject != nullptr)
+                {
+                    if (_loadedObjects.size() <= static_cast<size_t>(slot))
+                    {
+                        _loadedObjects.resize(slot + 1);
+                    }
+                    _loadedObjects[slot] = loadedObject;
+                    UpdateSceneryGroupIndexes();
+                    ResetTypeToRideEntryIndexMap();
+                }
+            }
+        }
+        return loadedObject;
     }
 
     int32_t FindSpareSlot(uint8_t objectType)

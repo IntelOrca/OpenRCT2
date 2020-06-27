@@ -5145,6 +5145,25 @@ static void window_ride_music_resize(rct_window* w)
     window_set_resize(w, 316, 81, 316, 81);
 }
 
+static size_t GetMusicStyleOrder(ObjectEntryIndex musicObjectIndex)
+{
+    auto& objManager = GetContext()->GetObjectManager();
+    auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(OBJECT_TYPE_MUSIC, musicObjectIndex));
+
+    // Get the index in the order list
+    auto originalStyleId = musicObj->GetOriginalStyleId();
+    if (originalStyleId)
+    {
+        auto it = std::find(std::begin(MusicStyleOrder), std::end(MusicStyleOrder), *originalStyleId);
+        if (it != std::end(MusicStyleOrder))
+        {
+            return std::distance(std::begin(MusicStyleOrder), it);
+        }
+    }
+
+    return std::numeric_limits<size_t>::max();
+}
+
 /**
  *
  *  rct2: 0x006B1EFC
@@ -5159,6 +5178,7 @@ static void window_ride_music_mousedown(rct_window* w, rct_widgetindex widgetInd
     if (ride == nullptr)
         return;
 
+    // Construct list of available music
     auto& musicOrder = window_ride_current_music_style_order;
     musicOrder.clear();
     auto& objManager = GetContext()->GetObjectManager();
@@ -5169,19 +5189,32 @@ static void window_ride_music_mousedown(rct_window* w, rct_widgetindex widgetInd
         {
             if (musicObj->SupportsRideType(ride->type))
             {
-                auto itemIndex = musicOrder.size();
                 musicOrder.push_back(i);
-                gDropdownItemsFormat[itemIndex] = STR_DROPDOWN_MENU_LABEL;
-                gDropdownItemsArgs[itemIndex] = musicObj->NameStringId;
             }
         }
     }
 
+    // Sort available music by the original RCT2 list order
+    std::stable_sort(musicOrder.begin(), musicOrder.end(), [&objManager](const ObjectEntryIndex& a, const ObjectEntryIndex& b) {
+        auto orderA = GetMusicStyleOrder(a);
+        auto orderB = GetMusicStyleOrder(b);
+        return orderA < orderB;
+    });
+
+    // Setup dropdown list
     auto numItems = musicOrder.size();
+    for (size_t i = 0; i < numItems; i++)
+    {
+        auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(OBJECT_TYPE_MUSIC, musicOrder[i]));
+        gDropdownItemsFormat[i] = STR_DROPDOWN_MENU_LABEL;
+        gDropdownItemsArgs[i] = musicObj->NameStringId;
+    }
+
     window_dropdown_show_text_custom_width(
         { w->windowPos.x + dropdownWidget->left, w->windowPos.y + dropdownWidget->top }, dropdownWidget->height() + 1,
         w->colours[1], 0, DROPDOWN_FLAG_STAY_OPEN, numItems, widget->right - dropdownWidget->left);
 
+    // Set currently checked item
     for (size_t i = 0; i < numItems; i++)
     {
         if (musicOrder[i] == ride->music)

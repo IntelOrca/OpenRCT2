@@ -47,12 +47,19 @@ void MusicObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t hei
 
 void MusicObject::ReadJson(IReadObjectContext* context, const json_t* root)
 {
+    _originalStyleId = {};
     _rideTypes.clear();
     _tracks.clear();
 
     auto properties = json_object_get(root, "properties");
     if (properties != nullptr)
     {
+        auto originalStyleId = json_object_get(properties, "originalStyleId");
+        if (json_is_integer(originalStyleId))
+        {
+            _originalStyleId = json_integer_value(originalStyleId);
+        }
+
         auto jRideTypes = json_object_get(properties, "rideTypes");
         if (json_is_array(jRideTypes))
         {
@@ -109,6 +116,11 @@ void MusicObject::ParseTracks(IReadObjectContext& context, const json_t* jTracks
             }
         }
     }
+}
+
+std::optional<uint8_t> MusicObject::GetOriginalStyleId() const
+{
+    return _originalStyleId;
 }
 
 bool MusicObject::SupportsRideType(uint8_t rideType)
