@@ -185,7 +185,7 @@ void* Mixer_Play_Music(const char* path, int32_t loop)
     }
     if (channel != nullptr)
     {
-        channel->SetGroup(MIXER_GROUP_RIDE_MUSIC);
+        channel->SetGroup(MixerGroup::RideMusic);
     }
     return channel;
 }
@@ -209,7 +209,7 @@ void* Mixer_Play_Music(std::unique_ptr<std::istream> stream, int32_t loop)
     }
     if (channel != nullptr)
     {
-        channel->SetGroup(MIXER_GROUP_RIDE_MUSIC);
+        channel->SetGroup(MixerGroup::RideMusic);
     }
     return channel;
 }
