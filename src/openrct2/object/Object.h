@@ -164,6 +164,7 @@ public:
     {
     }
 
+    bool IsAvailable() const;
     std::unique_ptr<std::istream> GetStream() const;
 };
 

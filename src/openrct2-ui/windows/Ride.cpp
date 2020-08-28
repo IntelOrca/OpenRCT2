@@ -5082,12 +5082,17 @@ static void window_ride_colour_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi
 #pragma region Music
 
 static constexpr const uint8_t MusicStyleOrder[] = {
-    MUSIC_STYLE_GENTLE,       MUSIC_STYLE_SUMMER,        MUSIC_STYLE_WATER,     MUSIC_STYLE_RAGTIME,      MUSIC_STYLE_TECHNO,
-    MUSIC_STYLE_MECHANICAL,   MUSIC_STYLE_MODERN,        MUSIC_STYLE_WILD_WEST, MUSIC_STYLE_PIRATES,      MUSIC_STYLE_ROCK,
-    MUSIC_STYLE_ROCK_STYLE_2, MUSIC_STYLE_ROCK_STYLE_3,  MUSIC_STYLE_FANTASY,   MUSIC_STYLE_HORROR,       MUSIC_STYLE_TOYLAND,
-    MUSIC_STYLE_CANDY_STYLE,  MUSIC_STYLE_ROMAN_FANFARE, MUSIC_STYLE_ORIENTAL,  MUSIC_STYLE_MARTIAN,      MUSIC_STYLE_SPACE,
-    MUSIC_STYLE_JUNGLE_DRUMS, MUSIC_STYLE_JURASSIC,      MUSIC_STYLE_EGYPTIAN,  MUSIC_STYLE_DODGEMS_BEAT, MUSIC_STYLE_SNOW,
-    MUSIC_STYLE_ICE,          MUSIC_STYLE_MEDIEVAL,      MUSIC_STYLE_URBAN,     MUSIC_STYLE_ORGAN
+    MUSIC_STYLE_GENTLE,        MUSIC_STYLE_SUMMER,        MUSIC_STYLE_WATER,
+    MUSIC_STYLE_RAGTIME,       MUSIC_STYLE_TECHNO,        MUSIC_STYLE_MECHANICAL,
+    MUSIC_STYLE_MODERN,        MUSIC_STYLE_WILD_WEST,     MUSIC_STYLE_PIRATES,
+    MUSIC_STYLE_ROCK,          MUSIC_STYLE_ROCK_STYLE_2,  MUSIC_STYLE_ROCK_STYLE_3,
+    MUSIC_STYLE_FANTASY,       MUSIC_STYLE_HORROR,        MUSIC_STYLE_TOYLAND,
+    MUSIC_STYLE_CANDY_STYLE,   MUSIC_STYLE_ROMAN_FANFARE, MUSIC_STYLE_ORIENTAL,
+    MUSIC_STYLE_MARTIAN,       MUSIC_STYLE_SPACE,         MUSIC_STYLE_JUNGLE_DRUMS,
+    MUSIC_STYLE_JURASSIC,      MUSIC_STYLE_EGYPTIAN,      MUSIC_STYLE_DODGEMS_BEAT,
+    MUSIC_STYLE_SNOW,          MUSIC_STYLE_ICE,           MUSIC_STYLE_MEDIEVAL,
+    MUSIC_STYLE_URBAN,         MUSIC_STYLE_ORGAN,         MUSIC_STYLE_CUSTOM_MUSIC_1,
+    MUSIC_STYLE_CUSTOM_MUSIC_2
 };
 
 static std::vector<ObjectEntryIndex> window_ride_current_music_style_order;
@@ -5187,6 +5192,25 @@ static void window_ride_music_mousedown(rct_window* w, rct_widgetindex widgetInd
         auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(OBJECT_TYPE_MUSIC, i));
         if (musicObj != nullptr)
         {
+            // Hide custom music if the WAV file does not exist
+            auto originalStyleId = musicObj->GetOriginalStyleId();
+            if (originalStyleId == MUSIC_STYLE_CUSTOM_MUSIC_1 || originalStyleId == MUSIC_STYLE_CUSTOM_MUSIC_2)
+            {
+                auto numTracks = musicObj->GetTrackCount();
+                if (numTracks > 0)
+                {
+                    auto track0 = musicObj->GetTrack(0);
+                    if (!track0->Asset.IsAvailable())
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
             if (musicObj->SupportsRideType(ride->type))
             {
                 musicOrder.push_back(i);

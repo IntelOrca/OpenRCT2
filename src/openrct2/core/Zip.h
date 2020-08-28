@@ -13,6 +13,7 @@
 
 #include <istream>
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <vector>
 
@@ -40,6 +41,9 @@ struct IZipArchive
 
     virtual void DeleteFile(const std::string_view& path) abstract;
     virtual void RenameFile(const std::string_view& path, const std::string_view& newPath) abstract;
+
+    std::optional<size_t> GetIndexFromPath(std::string_view path) const;
+    bool Exists(std::string_view path) const;
 };
 
 enum class ZIP_ACCESS

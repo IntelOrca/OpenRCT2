@@ -10,6 +10,7 @@
 #include "Object.h"
 
 #include "../Context.h"
+#include "../core/File.h"
 #include "../core/Memory.hpp"
 #include "../core/String.hpp"
 #include "../core/Zip.h"
@@ -160,6 +161,19 @@ public:
     {
     }
 };
+
+bool ObjectAsset::IsAvailable() const
+{
+    if (_zipPath.empty())
+    {
+        return File::Exists(_path);
+    }
+    else
+    {
+        auto zipArchive = Zip::TryOpen(_zipPath, ZIP_ACCESS::READ);
+        return zipArchive != nullptr && zipArchive->Exists(_path);
+    }
+}
 
 std::unique_ptr<std::istream> ObjectAsset::GetStream() const
 {

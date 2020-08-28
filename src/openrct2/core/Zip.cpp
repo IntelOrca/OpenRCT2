@@ -15,6 +15,50 @@
 #    include <algorithm>
 #    include <zip.h>
 
+std::string NormalisePath(const std::string_view& path)
+{
+    std::string result;
+    if (!path.empty())
+    {
+        // Convert back slashes to forward slashes
+        result = std::string(path);
+        for (auto ch = result.data(); *ch != '\0'; ch++)
+        {
+            if (*ch == '\\')
+            {
+                *ch = '/';
+            }
+        }
+    }
+    return result;
+}
+
+/**
+ * Normalises both the given path and the stored paths and finds the first match.
+ */
+std::optional<size_t> IZipArchive::GetIndexFromPath(std::string_view path) const
+{
+    auto normalisedPath = NormalisePath(path);
+    if (!normalisedPath.empty())
+    {
+        auto numFiles = GetNumFiles();
+        for (size_t i = 0; i < numFiles; i++)
+        {
+            auto normalisedZipPath = NormalisePath(GetFileName(i));
+            if (normalisedZipPath == normalisedPath)
+            {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+bool IZipArchive::Exists(std::string_view path) const
+{
+    return GetIndexFromPath(path).has_value();
+}
+
 class ZipArchive final : public IZipArchive
 {
 private:
@@ -79,20 +123,23 @@ public:
     {
         std::vector<uint8_t> result;
         auto index = GetIndexFromPath(path);
-        auto dataSize = GetFileSize(index);
-        if (dataSize > 0 && dataSize < SIZE_MAX)
+        if (index)
         {
-            auto zipFile = zip_fopen_index(_zip, index, 0);
-            if (zipFile != nullptr)
+            auto dataSize = GetFileSize(*index);
+            if (dataSize > 0 && dataSize < SIZE_MAX)
             {
-                result.resize(static_cast<size_t>(dataSize));
-                uint64_t readBytes = zip_fread(zipFile, result.data(), dataSize);
-                if (readBytes != dataSize)
+                auto zipFile = zip_fopen_index(_zip, *index, 0);
+                if (zipFile != nullptr)
                 {
-                    result.clear();
-                    result.shrink_to_fit();
+                    result.resize(static_cast<size_t>(dataSize));
+                    uint64_t readBytes = zip_fread(zipFile, result.data(), dataSize);
+                    if (readBytes != dataSize)
+                    {
+                        result.clear();
+                        result.shrink_to_fit();
+                    }
+                    zip_fclose(zipFile);
                 }
-                zip_fclose(zipFile);
             }
         }
         return result;
@@ -101,9 +148,9 @@ public:
     std::unique_ptr<std::istream> GetFileStream(const std::string_view& path) const override
     {
         auto index = GetIndexFromPath(path);
-        if (index != -1)
+        if (index)
         {
-            return std::make_unique<ifilestream>(_zip, index);
+            return std::make_unique<ifilestream>(_zip, *index);
         }
         return {};
     }
@@ -117,68 +164,43 @@ public:
 
         auto source = zip_source_buffer(_zip, writeBuffer.data(), writeBuffer.size(), 0);
         auto index = GetIndexFromPath(path);
-        if (index == -1)
+        if (index)
         {
-            zip_add(_zip, path.data(), source);
+            zip_replace(_zip, *index, source);
         }
         else
         {
-            zip_replace(_zip, index, source);
+            zip_add(_zip, path.data(), source);
         }
     }
 
     void DeleteFile(const std::string_view& path) override
     {
         auto index = GetIndexFromPath(path);
-        zip_delete(_zip, index);
+        if (index)
+        {
+            zip_delete(_zip, *index);
+        }
+        else
+        {
+            throw std::runtime_error("File does not exist.");
+        }
     }
 
     void RenameFile(const std::string_view& path, const std::string_view& newPath) override
     {
         auto index = GetIndexFromPath(path);
-        zip_file_rename(_zip, index, newPath.data(), ZIP_FL_ENC_GUESS);
+        if (index)
+        {
+            zip_file_rename(_zip, *index, newPath.data(), ZIP_FL_ENC_GUESS);
+        }
+        else
+        {
+            throw std::runtime_error("File does not exist.");
+        }
     }
 
 private:
-    /**
-     * Normalises both the given path and the stored paths and finds the first match.
-     */
-    zip_int64_t GetIndexFromPath(const std::string_view& path) const
-    {
-        auto normalisedPath = NormalisePath(path);
-        if (!normalisedPath.empty())
-        {
-            auto numFiles = zip_get_num_entries(_zip, 0);
-            for (zip_int64_t i = 0; i < numFiles; i++)
-            {
-                auto normalisedZipPath = NormalisePath(zip_get_name(_zip, i, ZIP_FL_ENC_GUESS));
-                if (normalisedZipPath == normalisedPath)
-                {
-                    return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    static std::string NormalisePath(const std::string_view& path)
-    {
-        std::string result;
-        if (!path.empty())
-        {
-            // Convert back slashes to forward slashes
-            result = std::string(path);
-            for (auto ch = result.data(); *ch != '\0'; ch++)
-            {
-                if (*ch == '\\')
-                {
-                    *ch = '/';
-                }
-            }
-        }
-        return result;
-    }
-
     class ifilestream final : public std::istream
     {
     private:
