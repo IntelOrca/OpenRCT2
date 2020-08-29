@@ -22,6 +22,7 @@
 #include "../localisation/StringIds.h"
 #include "../peep/Peep.h"
 #include "../ride/Ride.h"
+#include "../ride/RideAudio.h"
 #include "../ui/UiContext.h"
 #include "../util/Util.h"
 #include "AudioContext.h"
@@ -47,9 +48,6 @@ int32_t gVolumeAdjustZoom = 0;
 
 void* gTitleMusicChannel = nullptr;
 void* gRainSoundChannel = nullptr;
-
-std::vector<rct_ride_music> gRideMusicList;
-std::vector<rct_ride_music_params> gRideMusicParamsList;
 
 rct_vehicle_sound gVehicleSoundList[AUDIO_MAX_VEHICLE_SOUNDS];
 
@@ -286,23 +284,11 @@ void audio_start_title_music()
     }
 }
 
-void audio_stop_ride_music()
-{
-    for (const auto& rideMusic : gRideMusicList)
-    {
-        if (rideMusic.sound_channel != nullptr)
-        {
-            Mixer_Stop_Channel(rideMusic.sound_channel);
-        }
-    }
-    gRideMusicList.clear();
-}
-
 void audio_stop_all_music_and_sounds()
 {
     audio_stop_title_music();
     audio_stop_vehicle_sounds();
-    audio_stop_ride_music();
+    RideAudioStopAllChannels();
     peep_stop_crowd_noise();
     audio_stop_rain_sound();
 }
@@ -346,7 +332,7 @@ void audio_close()
 {
     peep_stop_crowd_noise();
     audio_stop_title_music();
-    audio_stop_ride_music();
+    RideAudioStopAllChannels();
     audio_stop_rain_sound();
     gAudioCurrentDevice = -1;
 }
@@ -371,7 +357,7 @@ void audio_pause_sounds()
 {
     gGameSoundsOff = true;
     audio_stop_vehicle_sounds();
-    audio_stop_ride_music();
+    RideAudioStopAllChannels();
     peep_stop_crowd_noise();
     audio_stop_rain_sound();
 }

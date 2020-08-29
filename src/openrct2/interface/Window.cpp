@@ -22,6 +22,7 @@
 #include "../localisation/Localisation.h"
 #include "../localisation/StringIds.h"
 #include "../platform/platform.h"
+#include "../ride/RideAudio.h"
 #include "../scenario/Scenario.h"
 #include "../sprites.h"
 #include "../ui/UiContext.h"
@@ -1720,7 +1721,7 @@ void window_close_construction_windows()
  */
 void window_update_viewport_ride_music()
 {
-    gRideMusicParamsList.clear();
+    RideAudioClearAllViewportInstances();
     g_music_tracking_viewport = nullptr;
 
     for (auto it = g_window_list.rbegin(); it != g_window_list.rend(); it++)

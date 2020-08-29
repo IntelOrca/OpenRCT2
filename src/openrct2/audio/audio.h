@@ -15,7 +15,6 @@
 #include <vector>
 
 #define AUDIO_DEVICE_NAME_SIZE 256
-#define AUDIO_MAX_RIDE_MUSIC 32
 #define AUDIO_MAX_VEHICLE_SOUNDS 14
 #define NUM_DEFAULT_MUSIC_TRACKS 46
 #define AUDIO_PLAY_AT_CENTRE 0x8000
@@ -28,26 +27,6 @@ struct CoordsXYZ;
 struct audio_device
 {
     char name[AUDIO_DEVICE_NAME_SIZE];
-};
-
-struct rct_ride_music
-{
-    ride_id_t ride_id{};
-    uint8_t tune_id{};
-    int16_t volume{};
-    int16_t pan{};
-    uint16_t frequency{};
-    void* sound_channel{};
-};
-
-struct rct_ride_music_params
-{
-    ride_id_t ride_id{};
-    uint8_t tune_id{};
-    int32_t offset{};
-    int16_t volume{};
-    int16_t pan{};
-    uint16_t frequency{};
 };
 
 struct Sound
@@ -158,9 +137,6 @@ extern int32_t gVolumeAdjustZoom;
 extern void* gTitleMusicChannel;
 extern void* gRainSoundChannel;
 
-extern std::vector<rct_ride_music> gRideMusicList;
-extern std::vector<rct_ride_music_params> gRideMusicParamsList;
-
 extern rct_vehicle_sound gVehicleSoundList[AUDIO_MAX_VEHICLE_SOUNDS];
 
 /**
@@ -216,11 +192,6 @@ void audio_start_title_music();
  * Stops the rain sound effect from playing.
  */
 void audio_stop_rain_sound();
-/**
- * Stops ride music from playing.
- * rct2: 0x006BCA9F
- */
-void audio_stop_ride_music();
 /**
  * Stops the title music from playing.
  * rct2: 0x006BD0BD

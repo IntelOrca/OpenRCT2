@@ -347,6 +347,7 @@
     <ClInclude Include="ride\gentle\meta\SpaceRings.h" />
     <ClInclude Include="ride\gentle\meta\SpiralSlide.h" />
     <ClInclude Include="ride\Ride.h" />
+    <ClInclude Include="ride\RideAudio.h" />
     <ClInclude Include="ride\RideData.h" />
     <ClInclude Include="ride\RideRatings.h" />
     <ClInclude Include="ride\RideTypes.h" />
@@ -689,6 +690,7 @@
     <ClCompile Include="ride\gentle\SpaceRings.cpp" />
     <ClCompile Include="ride\gentle\SpiralSlide.cpp" />
     <ClCompile Include="ride\Ride.cpp" />
+    <ClCompile Include="ride\RideAudio.cpp" />
     <ClCompile Include="ride\RideData.cpp" />
     <ClCompile Include="ride\RideRatings.cpp" />
     <ClCompile Include="ride\ShopItem.cpp" />
