@@ -1720,7 +1720,7 @@ void window_close_construction_windows()
  */
 void window_update_viewport_ride_music()
 {
-    gRideMusicParamsListEnd = &gRideMusicParamsList[0];
+    gRideMusicParamsList.clear();
     g_music_tracking_viewport = nullptr;
 
     for (auto it = g_window_list.rbegin(); it != g_window_list.rend(); it++)

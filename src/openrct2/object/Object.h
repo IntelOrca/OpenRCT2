@@ -165,6 +165,7 @@ public:
     }
 
     bool IsAvailable() const;
+    size_t GetLength() const;
     std::unique_ptr<std::istream> GetStream() const;
 };
 

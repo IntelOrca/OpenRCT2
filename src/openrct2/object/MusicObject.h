@@ -19,6 +19,8 @@ class MusicObjectTrack
 public:
     std::string Name;
     ObjectAsset Asset;
+    size_t Offset;
+    size_t Length;
 };
 
 class MusicObject final : public Object

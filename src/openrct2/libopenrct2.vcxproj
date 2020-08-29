@@ -346,7 +346,6 @@
     <ClInclude Include="ride\gentle\meta\ObservationTower.h" />
     <ClInclude Include="ride\gentle\meta\SpaceRings.h" />
     <ClInclude Include="ride\gentle\meta\SpiralSlide.h" />
-    <ClInclude Include="ride\MusicList.h" />
     <ClInclude Include="ride\Ride.h" />
     <ClInclude Include="ride\RideData.h" />
     <ClInclude Include="ride\RideRatings.h" />
@@ -689,7 +688,6 @@
     <ClCompile Include="ride\gentle\ObservationTower.cpp" />
     <ClCompile Include="ride\gentle\SpaceRings.cpp" />
     <ClCompile Include="ride\gentle\SpiralSlide.cpp" />
-    <ClCompile Include="ride\MusicList.cpp" />
     <ClCompile Include="ride\Ride.cpp" />
     <ClCompile Include="ride\RideData.cpp" />
     <ClCompile Include="ride\RideRatings.cpp" />

@@ -175,6 +175,28 @@ bool ObjectAsset::IsAvailable() const
     }
 }
 
+size_t ObjectAsset::GetLength() const
+{
+    if (_zipPath.empty())
+    {
+        return File::ReadAllBytes(_path).size();
+    }
+    else
+    {
+        auto zipArchive = Zip::TryOpen(_zipPath, ZIP_ACCESS::READ);
+        if (zipArchive != nullptr)
+        {
+            auto index = zipArchive->GetIndexFromPath(_path);
+            if (index)
+            {
+                auto size = zipArchive->GetFileSize(*index);
+                return size;
+            }
+        }
+    }
+    return 0;
+}
+
 std::unique_ptr<std::istream> ObjectAsset::GetStream() const
 {
     if (_zipPath.empty())

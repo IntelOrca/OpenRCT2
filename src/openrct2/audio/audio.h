@@ -12,6 +12,8 @@
 #include "../common.h"
 #include "../ride/RideTypes.h"
 
+#include <vector>
+
 #define AUDIO_DEVICE_NAME_SIZE 256
 #define AUDIO_MAX_RIDE_MUSIC 32
 #define AUDIO_MAX_VEHICLE_SOUNDS 14
@@ -30,29 +32,22 @@ struct audio_device
 
 struct rct_ride_music
 {
-    ride_id_t ride_id;
-    uint8_t tune_id;
-    int16_t volume;
-    int16_t pan;
-    uint16_t frequency;
-    void* sound_channel;
-};
-
-struct rct_ride_music_info
-{
-    uint8_t path_id;
-    uint32_t offset;
-    uint32_t length;
+    ride_id_t ride_id{};
+    uint8_t tune_id{};
+    int16_t volume{};
+    int16_t pan{};
+    uint16_t frequency{};
+    void* sound_channel{};
 };
 
 struct rct_ride_music_params
 {
-    ride_id_t ride_id;
-    uint8_t tune_id;
-    int32_t offset;
-    int16_t volume;
-    int16_t pan;
-    uint16_t frequency;
+    ride_id_t ride_id{};
+    uint8_t tune_id{};
+    int32_t offset{};
+    int16_t volume{};
+    int16_t pan{};
+    uint16_t frequency{};
 };
 
 struct Sound
@@ -163,10 +158,8 @@ extern int32_t gVolumeAdjustZoom;
 extern void* gTitleMusicChannel;
 extern void* gRainSoundChannel;
 
-extern rct_ride_music gRideMusicList[AUDIO_MAX_RIDE_MUSIC];
-extern rct_ride_music_info gRideMusicInfoList[NUM_DEFAULT_MUSIC_TRACKS];
-extern rct_ride_music_params gRideMusicParamsList[AUDIO_MAX_RIDE_MUSIC];
-extern rct_ride_music_params* gRideMusicParamsListEnd;
+extern std::vector<rct_ride_music> gRideMusicList;
+extern std::vector<rct_ride_music_params> gRideMusicParamsList;
 
 extern rct_vehicle_sound gVehicleSoundList[AUDIO_MAX_VEHICLE_SOUNDS];
 

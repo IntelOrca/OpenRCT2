@@ -48,9 +48,8 @@ int32_t gVolumeAdjustZoom = 0;
 void* gTitleMusicChannel = nullptr;
 void* gRainSoundChannel = nullptr;
 
-rct_ride_music gRideMusicList[AUDIO_MAX_RIDE_MUSIC];
-rct_ride_music_params gRideMusicParamsList[AUDIO_MAX_RIDE_MUSIC];
-rct_ride_music_params* gRideMusicParamsListEnd;
+std::vector<rct_ride_music> gRideMusicList;
+std::vector<rct_ride_music_params> gRideMusicParamsList;
 
 rct_vehicle_sound gVehicleSoundList[AUDIO_MAX_VEHICLE_SOUNDS];
 
@@ -289,17 +288,14 @@ void audio_start_title_music()
 
 void audio_stop_ride_music()
 {
-    for (auto& rideMusic : gRideMusicList)
+    for (const auto& rideMusic : gRideMusicList)
     {
-        if (rideMusic.ride_id != RIDE_ID_NULL)
+        if (rideMusic.sound_channel != nullptr)
         {
-            rideMusic.ride_id = RIDE_ID_NULL;
-            if (rideMusic.sound_channel != nullptr)
-            {
-                Mixer_Stop_Channel(rideMusic.sound_channel);
-            }
+            Mixer_Stop_Channel(rideMusic.sound_channel);
         }
     }
+    gRideMusicList.clear();
 }
 
 void audio_stop_all_music_and_sounds()
@@ -331,33 +327,7 @@ void audio_stop_rain_sound()
 
 void audio_init_ride_sounds_and_info()
 {
-    int32_t deviceNum = 0;
-    audio_init_ride_sounds(deviceNum);
-
-    for (auto& rideMusicInfo : gRideMusicInfoList)
-    {
-        const utf8* path = context_get_path_legacy(rideMusicInfo.path_id);
-        if (File::Exists(path))
-        {
-            try
-            {
-                auto fs = OpenRCT2::FileStream(path, OpenRCT2::FILE_MODE_OPEN);
-                uint32_t head = fs.ReadValue<uint32_t>();
-                if (head == 0x78787878)
-                {
-                    rideMusicInfo.length = 0;
-                }
-                // The length used to be hardcoded, but we stopped doing that to allow replacement.
-                if (rideMusicInfo.length == 0)
-                {
-                    rideMusicInfo.length = fs.GetLength();
-                }
-            }
-            catch (const std::exception&)
-            {
-            }
-        }
-    }
+    audio_init_ride_sounds(0);
 }
 
 void audio_init_ride_sounds(int32_t device)
@@ -370,10 +340,6 @@ void audio_init_ride_sounds(int32_t device)
 
     gAudioCurrentDevice = device;
     config_save_default();
-    for (auto& rideMusic : gRideMusicList)
-    {
-        rideMusic.ride_id = RIDE_ID_NULL;
-    }
 }
 
 void audio_close()

@@ -29,6 +29,12 @@ void MusicObject::Load()
 {
     GetStringTable().Sort();
     NameStringId = language_allocate_object_string(GetName());
+
+    for (auto& track : _tracks)
+    {
+        track.Offset = 1378;
+        track.Length = track.Asset.GetLength();
+    }
 }
 
 void MusicObject::Unload()
