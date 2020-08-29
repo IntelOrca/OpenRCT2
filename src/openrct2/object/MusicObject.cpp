@@ -25,6 +25,8 @@
 
 using namespace OpenRCT2;
 
+constexpr size_t DEFAULT_BYTES_PER_TICK = 1378;
+
 void MusicObject::Load()
 {
     GetStringTable().Sort();
@@ -32,7 +34,7 @@ void MusicObject::Load()
 
     for (auto& track : _tracks)
     {
-        track.Offset = 1378;
+        track.BytesPerTick = DEFAULT_BYTES_PER_TICK;
         track.Length = track.Asset.GetLength();
     }
 }

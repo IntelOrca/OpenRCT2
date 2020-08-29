@@ -19,7 +19,15 @@ class MusicObjectTrack
 public:
     std::string Name;
     ObjectAsset Asset;
-    size_t Offset;
+
+    /**
+     * The number of PCM bytes to seek per game tick when the music is playing offscreen.
+     */
+    size_t BytesPerTick;
+
+    /**
+     * The length of the PCM track in bytes.
+     */
     size_t Length;
 };
 

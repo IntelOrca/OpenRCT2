@@ -174,6 +174,7 @@ namespace OpenRCT2
             gfx_object_check_all_images_freed();
             gfx_unload_g2();
             gfx_unload_g1();
+            audio_close();
             config_release();
 
             Instance = nullptr;

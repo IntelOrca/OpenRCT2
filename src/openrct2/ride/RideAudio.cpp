@@ -261,17 +261,24 @@ void RideUpdateMusicChannels()
     }
 }
 
-static std::pair<size_t, size_t> RideMusicGetTuneOffsetLength(const Ride& ride)
+static std::pair<size_t, size_t> RideMusicGetTrackOffsetLength(const Ride& ride)
 {
-    auto& objManager = GetContext()->GetObjectManager();
-    auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(OBJECT_TYPE_MUSIC, ride.music));
-    if (musicObj != nullptr)
+    if (ride.type == RIDE_TYPE_CIRCUS)
     {
-        auto numTracks = musicObj->GetTrackCount();
-        if (ride.music_tune_id < numTracks)
+        return { 1378, 12427456 };
+    }
+    else
+    {
+        auto& objManager = GetContext()->GetObjectManager();
+        auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(OBJECT_TYPE_MUSIC, ride.music));
+        if (musicObj != nullptr)
         {
-            auto track = musicObj->GetTrack(ride.music_tune_id);
-            return { track->Offset, track->Length };
+            auto numTracks = musicObj->GetTrackCount();
+            if (ride.music_tune_id < numTracks)
+            {
+                auto track = musicObj->GetTrack(ride.music_tune_id);
+                return { track->BytesPerTick, track->Length };
+            }
         }
     }
     return { 0, 0 };
@@ -279,9 +286,9 @@ static std::pair<size_t, size_t> RideMusicGetTuneOffsetLength(const Ride& ride)
 
 static void RideUpdateMusicPosition(Ride& ride)
 {
-    auto [tuneOffset, tuneLength] = RideMusicGetTuneOffsetLength(ride);
-    auto position = ride.music_position + tuneOffset;
-    if (position < tuneLength)
+    auto [trackOffset, trackLength] = RideMusicGetTrackOffsetLength(ride);
+    auto position = ride.music_position + trackOffset;
+    if (position < trackLength)
     {
         ride.music_position = position;
     }
@@ -292,20 +299,19 @@ static void RideUpdateMusicPosition(Ride& ride)
     }
 }
 
-static void RideUpdateMusicPosition(Ride& ride, size_t offset, int16_t volume, int16_t pan, uint16_t sampleRate)
+static void RideUpdateMusicPosition(Ride& ride, size_t offset, size_t length, int16_t volume, int16_t pan, uint16_t sampleRate)
 {
-    auto [tuneOffset, tuneLength] = RideMusicGetTuneOffsetLength(ride);
-    if (offset < tuneLength)
+    if (offset < length)
     {
         if (_musicInstances.size() < MAX_RIDE_MUSIC_CHANNELS)
         {
-            auto& ride_music_params = _musicInstances.emplace_back();
-            ride_music_params.RideId = ride.id;
-            ride_music_params.TrackIndex = ride.music_tune_id;
-            ride_music_params.Offset = offset;
-            ride_music_params.Volume = volume;
-            ride_music_params.Pan = pan;
-            ride_music_params.Frequency = sampleRate;
+            auto& instance = _musicInstances.emplace_back();
+            instance.RideId = ride.id;
+            instance.TrackIndex = ride.music_tune_id;
+            instance.Offset = offset;
+            instance.Volume = volume;
+            instance.Pan = pan;
+            instance.Frequency = sampleRate;
         }
         ride.music_position = static_cast<uint32_t>(offset);
     }
@@ -316,20 +322,50 @@ static void RideUpdateMusicPosition(Ride& ride, size_t offset, int16_t volume, i
     }
 }
 
-uint8_t unkn(int32_t a)
+static void RideUpdateMusicPosition(Ride& ride, int16_t volume, int16_t pan, uint16_t sampleRate)
+{
+    auto foundChannel = std::find_if(_musicChannels.begin(), _musicChannels.end(), [&ride](const auto& channel) {
+        return channel.RideId == ride.id && channel.TrackIndex == ride.music_tune_id;
+    });
+
+    auto [trackOffset, trackLength] = RideMusicGetTrackOffsetLength(ride);
+    if (foundChannel != _musicChannels.end())
+    {
+        if (foundChannel->IsPlaying())
+        {
+            // Since we have a real music channel, use the offset from that
+            auto newOffset = foundChannel->GetOffset();
+            RideUpdateMusicPosition(ride, newOffset, trackLength, volume, pan, sampleRate);
+        }
+        else
+        {
+            // We had a real music channel, but it isn't playing anymore, so stop the track
+            ride.music_position = 0;
+            ride.music_tune_id = TUNE_ID_NULL;
+        }
+    }
+    else
+    {
+        // We do not have a real music channel, so simulate the playing of the music track
+        auto newOffset = ride.music_position + trackOffset;
+        RideUpdateMusicPosition(ride, newOffset, trackLength, volume, pan, sampleRate);
+    }
+}
+
+static uint8_t CalculateVolume(int32_t pan)
 {
     uint8_t result = 255;
-    int32_t b = std::min(std::abs(a), 6143) - 2048;
-    if (b > 0)
+    int32_t v = std::min(std::abs(pan), 6143) - 2048;
+    if (v > 0)
     {
-        b = -((b / 4) - 1024) / 4;
-        result = static_cast<uint8_t>(std::clamp(b, 0, 255));
+        v = -((v / 4) - 1024) / 4;
+        result = static_cast<uint8_t>(std::clamp(v, 0, 255));
     }
     return result;
 }
 
 /**
- *
+ * Register an instance of audible ride music for this frame at the given coordinates.
  */
 void RideUpdateMusicInstance(Ride& ride, const CoordsXYZ& rideCoords, uint16_t sampleRate)
 {
@@ -337,82 +373,48 @@ void RideUpdateMusicInstance(Ride& ride, const CoordsXYZ& rideCoords, uint16_t s
     {
         auto rotatedCoords = translate_3d_to_2d_with_z(get_current_rotation(), rideCoords);
         auto viewport = g_music_tracking_viewport;
-        int16_t view_width = viewport->view_width;
-        int16_t view_width2 = view_width * 2;
-        int16_t view_x = viewport->viewPos.x - view_width2;
-        int16_t view_y = viewport->viewPos.y - view_width;
-        int16_t view_x2 = view_width2 + view_width2 + viewport->view_width + view_x;
-        int16_t view_y2 = view_width + view_width + viewport->view_height + view_y;
-
-        if (view_x >= rotatedCoords.x || view_y >= rotatedCoords.y || view_x2 < rotatedCoords.x || view_y2 < rotatedCoords.y)
+        auto viewWidth = viewport->view_width;
+        auto viewWidth2 = viewWidth * 2;
+        auto viewX = viewport->viewPos.x - viewWidth2;
+        auto viewY = viewport->viewPos.y - viewWidth;
+        auto viewX2 = viewWidth2 + viewWidth2 + viewport->view_width + viewX;
+        auto viewY2 = viewWidth + viewWidth + viewport->view_height + viewY;
+        if (viewX >= rotatedCoords.x || viewY >= rotatedCoords.y || viewX2 < rotatedCoords.x || viewY2 < rotatedCoords.y)
         {
             RideUpdateMusicPosition(ride);
-            return;
-        }
-
-        int32_t x2 = viewport->pos.x + ((rotatedCoords.x - viewport->viewPos.x) / viewport->zoom);
-        x2 *= 0x10000;
-        uint16_t screenwidth = context_get_width();
-        if (screenwidth < 64)
-        {
-            screenwidth = 64;
-        }
-        int32_t pan_x = ((x2 / screenwidth) - 0x8000) >> 4;
-
-        int32_t y2 = viewport->pos.y + ((rotatedCoords.y - viewport->viewPos.y) / viewport->zoom);
-        y2 *= 0x10000;
-        uint16_t screenheight = context_get_height();
-        if (screenheight < 64)
-        {
-            screenheight = 64;
-        }
-        int32_t pan_y = ((y2 / screenheight) - 0x8000) >> 4;
-
-        auto volA = unkn(pan_y);
-        auto volB = unkn(pan_x);
-        auto volC = std::min(volA, volB);
-        if (volC < gVolumeAdjustZoom * 3)
-        {
-            volC = 0;
         }
         else
         {
-            volC = volC - (gVolumeAdjustZoom * 3);
-        }
+            auto x2 = (viewport->pos.x + ((rotatedCoords.x - viewport->viewPos.x) / viewport->zoom)) * 0x10000;
+            auto screenWidth = std::max(context_get_width(), 64);
+            auto panX = ((x2 / screenWidth) - 0x8000) >> 4;
 
-        int16_t newVolume = -((static_cast<uint8_t>(-volC - 1) * static_cast<uint8_t>(-volC - 1)) / 16) - 700;
-        if (volC != 0 && newVolume >= -4000)
-        {
-            auto newPan = std::clamp(pan_x, -10000, 10000);
-            auto foundChannel = std::find_if(_musicChannels.begin(), _musicChannels.end(), [&ride](const auto& channel) {
-                return channel.RideId == ride.id && channel.TrackIndex == ride.music_tune_id;
-            });
-            if (foundChannel != _musicChannels.end())
+            auto y2 = (viewport->pos.y + ((rotatedCoords.y - viewport->viewPos.y) / viewport->zoom)) * 0x10000;
+            auto screenHeight = std::max(context_get_height(), 64);
+            auto panY = ((y2 / screenHeight) - 0x8000) >> 4;
+
+            auto volX = CalculateVolume(panX);
+            auto volY = CalculateVolume(panY);
+            auto volXY = std::min(volX, volY);
+            if (volXY < gVolumeAdjustZoom * 3)
             {
-                if (foundChannel->IsPlaying())
-                {
-                    // Since we have a real music channel, use the offset from that
-                    auto newOffset = foundChannel->GetOffset();
-                    RideUpdateMusicPosition(ride, newOffset, newVolume, newPan, sampleRate);
-                }
-                else
-                {
-                    // We had a real music channel, but it isn't playing anymore, so stop the track
-                    ride.music_position = 0;
-                    ride.music_tune_id = TUNE_ID_NULL;
-                }
+                volXY = 0;
             }
             else
             {
-                // We do not have a real music channel, so simulate the playing of the music track
-                auto [tuneOffset, tuneLength] = RideMusicGetTuneOffsetLength(ride);
-                auto newOffset = ride.music_position + tuneOffset;
-                RideUpdateMusicPosition(ride, newOffset, newVolume, pan_x, sampleRate);
+                volXY = volXY - (gVolumeAdjustZoom * 3);
             }
-        }
-        else
-        {
-            RideUpdateMusicPosition(ride);
+
+            int16_t newVolume = -((static_cast<uint8_t>(-volXY - 1) * static_cast<uint8_t>(-volXY - 1)) / 16) - 700;
+            if (volXY != 0 && newVolume >= -4000)
+            {
+                auto newPan = std::clamp(panX, -10000, 10000);
+                RideUpdateMusicPosition(ride, newVolume, newPan, sampleRate);
+            }
+            else
+            {
+                RideUpdateMusicPosition(ride);
+            }
         }
     }
 }
