@@ -127,7 +127,7 @@ public:
 protected:
     void Serialise(IStream* stream, const ObjectRepositoryItem& item) const override
     {
-        stream->WriteValue(item.Identifier);
+        stream->WriteString(item.Identifier);
         stream->WriteValue(item.ObjectEntry);
         stream->WriteString(item.Path);
         stream->WriteString(item.Name);
