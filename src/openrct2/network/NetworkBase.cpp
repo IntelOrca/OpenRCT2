@@ -1275,6 +1275,11 @@ void NetworkBase::Server_Send_OBJECTS_LIST(
 
 template<typename T> static T ReadFromVector(const std::vector<uint8_t>& v, size_t& offset)
 {
+    if (offset + sizeof(T) > v.size())
+    {
+        throw std::runtime_error("Read past end of vector");
+    }
+
     T result;
     std::memcpy(&result, &v[offset], sizeof(T));
     offset += sizeof(T);
@@ -1316,6 +1321,25 @@ void NetworkBase::Server_Send_SCRIPTS(NetworkConnection& connection) const
 
         PushToVector(scriptBuffer, static_cast<uint32_t>(code.size()));
         scriptBuffer.insert(scriptBuffer.end(), code.c_str(), code.c_str() + code.size());
+    }
+
+    log_verbose("Compressing script data of size %u bytes", scriptBuffer.size());
+    auto compressed = util_zlib_deflate(scriptBuffer.data(), scriptBuffer.size());
+    if (compressed)
+    {
+        log_verbose("Script data of size %u bytes, compressed to %u bytes", scriptBuffer.size(), compressed->size());
+
+        // Insert compression flag
+        scriptBuffer.clear();
+        scriptBuffer.push_back(1);
+        scriptBuffer.insert(scriptBuffer.end(), compressed->begin(), compressed->end());
+    }
+    else
+    {
+        log_verbose("Failed to compress script data of size %u bytes", scriptBuffer.size());
+
+        // Insert no-compression flag
+        scriptBuffer.insert(scriptBuffer.begin(), 0);
     }
 
     for (size_t i = 0; i < scriptBuffer.size(); i += CHUNK_SIZE)
@@ -2426,16 +2450,42 @@ void NetworkBase::Client_Handle_SCRIPTS(NetworkConnection& connection, NetworkPa
         std::memcpy(&chunk_buffer[offset], const_cast<void*>(static_cast<const void*>(packet.Read(chunksize))), chunksize);
         if (offset + chunksize == size)
         {
-            size_t readOffset = 0;
+            context_force_close_window_by_class(WC_NETWORK_STATUS);
 
-            auto numScripts = ReadFromVector<uint32_t>(chunk_buffer, readOffset);
-            auto& scriptEngine = GetContext()->GetScriptEngine();
-            for (uint32_t i = 0; i < numScripts; i++)
+            // Allow queue processing of game actions again
+            GameActions::ResumeQueue();
+
+            try
             {
-                auto codeLength = ReadFromVector<uint32_t>(chunk_buffer, readOffset);
-                auto code = std::string_view(reinterpret_cast<const char*>(&chunk_buffer[readOffset]), codeLength);
-                readOffset += codeLength;
-                scriptEngine.AddNetworkPlugin(code);
+                size_t readOffset = 0;
+                auto isCompressed = ReadFromVector<uint8_t>(chunk_buffer, readOffset);
+                if (isCompressed)
+                {
+                    log_verbose("Decompressing script data of %u bytes", chunk_buffer.size() - readOffset);
+                    auto inflated = util_zlib_inflate(&chunk_buffer[readOffset], chunk_buffer.size() - readOffset);
+                    if (!inflated)
+                    {
+                        throw std::runtime_error("Failed to decompress script data sent from server.");
+                    }
+
+                    chunk_buffer = std::move(*inflated);
+                    readOffset = 0;
+                }
+
+                auto numScripts = ReadFromVector<uint32_t>(chunk_buffer, readOffset);
+                auto& scriptEngine = GetContext()->GetScriptEngine();
+                for (uint32_t i = 0; i < numScripts; i++)
+                {
+                    auto codeLength = ReadFromVector<uint32_t>(chunk_buffer, readOffset);
+                    auto code = std::string_view(reinterpret_cast<const char*>(&chunk_buffer[readOffset]), codeLength);
+                    readOffset += codeLength;
+                    scriptEngine.AddNetworkPlugin(code);
+                }
+            }
+            catch (const std::exception& e)
+            {
+                log_error("Unable to process scripts: %s", e.what());
+                Close();
             }
         }
 #    else
