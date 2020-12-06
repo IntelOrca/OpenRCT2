@@ -25,6 +25,9 @@ struct PacketHeader
 static_assert(sizeof(PacketHeader) == 6);
 #pragma pack(pop)
 
+// 64 KiB (including packet header)
+constexpr size_t MAX_PACKET_SIZE = 64 * 1024 - sizeof(PacketHeader);
+
 struct NetworkPacket final
 {
     NetworkPacket() = default;

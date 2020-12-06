@@ -53,6 +53,7 @@ bool NetworkPacket::CommandRequiresAuth()
         case NetworkCommand::ObjectsList:
         case NetworkCommand::MapRequest:
         case NetworkCommand::Heartbeat:
+        case NetworkCommand::Scripts:
             return false;
         default:
             return true;

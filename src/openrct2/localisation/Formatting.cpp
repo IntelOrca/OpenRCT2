@@ -623,6 +623,7 @@ namespace OpenRCT2
     template void FormatArgument(std::stringstream&, FormatToken, uint16_t);
     template void FormatArgument(std::stringstream&, FormatToken, int16_t);
     template void FormatArgument(std::stringstream&, FormatToken, int32_t);
+    template void FormatArgument(std::stringstream&, FormatToken, uint32_t);
     template void FormatArgument(std::stringstream&, FormatToken, int64_t);
     template void FormatArgument(std::stringstream&, FormatToken, uint64_t);
     template void FormatArgument(std::stringstream&, FormatToken, const char*);

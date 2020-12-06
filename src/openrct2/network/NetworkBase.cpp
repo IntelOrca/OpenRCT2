@@ -19,6 +19,7 @@
 #include "../actions/PeepPickupAction.hpp"
 #include "../core/Guard.hpp"
 #include "../core/Json.hpp"
+#include "../localisation/Formatting.h"
 #include "../platform/Platform2.h"
 #include "../scripting/ScriptEngine.h"
 #include "../ui/UiContext.h"
@@ -1272,10 +1273,22 @@ void NetworkBase::Server_Send_OBJECTS_LIST(
     }
 }
 
+template<typename T> static T ReadFromVector(const std::vector<uint8_t>& v, size_t& offset)
+{
+    T result;
+    std::memcpy(&result, &v[offset], sizeof(T));
+    offset += sizeof(T);
+    return result;
+}
+
+template<typename T> static void PushToVector(std::vector<uint8_t>& v, const T& value)
+{
+    auto ptr = reinterpret_cast<const uint8_t*>(&value);
+    v.insert(v.end(), ptr, ptr + sizeof(value));
+}
+
 void NetworkBase::Server_Send_SCRIPTS(NetworkConnection& connection) const
 {
-    NetworkPacket packet(NetworkCommand::Scripts);
-
 #    ifdef ENABLE_SCRIPTING
     using namespace OpenRCT2::Scripting;
 
@@ -1292,20 +1305,33 @@ void NetworkBase::Server_Send_SCRIPTS(NetworkConnection& connection) const
     }
 
     log_verbose("Server sends %u scripts", pluginsToSend.size());
-    packet << static_cast<uint32_t>(pluginsToSend.size());
+    std::vector<uint8_t> scriptBuffer;
+    PushToVector(scriptBuffer, static_cast<uint32_t>(pluginsToSend.size()));
     for (const auto& plugin : pluginsToSend)
     {
         const auto& metadata = plugin->GetMetadata();
         log_verbose("Script %s", metadata.Name.c_str());
 
         const auto& code = plugin->GetCode();
-        packet << static_cast<uint32_t>(code.size());
-        packet.Write(reinterpret_cast<const uint8_t*>(code.c_str()), code.size());
+
+        PushToVector(scriptBuffer, static_cast<uint32_t>(code.size()));
+        scriptBuffer.insert(scriptBuffer.end(), code.c_str(), code.c_str() + code.size());
     }
+
+    for (size_t i = 0; i < scriptBuffer.size(); i += CHUNK_SIZE)
+    {
+        size_t datasize = std::min<size_t>(CHUNK_SIZE, scriptBuffer.size() - i);
+        NetworkPacket packet(NetworkCommand::Scripts);
+        packet << static_cast<uint32_t>(scriptBuffer.size()) << static_cast<uint32_t>(i);
+        packet.Write(&scriptBuffer[i], datasize);
+        connection.QueuePacket(std::move(packet));
+    }
+
 #    else
-    packet << static_cast<uint32_t>(0);
-#    endif
+    NetworkPacket packet(NetworkCommand::Scripts);
+    packet << static_cast<uint32_t>(0) << static_cast<uint32_t>(0);
     connection.QueuePacket(std::move(packet));
+#    endif
 }
 
 void NetworkBase::Client_Send_HEARTBEAT(NetworkConnection& connection) const
@@ -2360,25 +2386,63 @@ void NetworkBase::Client_Handle_OBJECTS_LIST(NetworkConnection& connection, Netw
 
 void NetworkBase::Client_Handle_SCRIPTS(NetworkConnection& connection, NetworkPacket& packet)
 {
-    uint32_t numScripts{};
-    packet >> numScripts;
+    uint32_t size, offset;
+    packet >> size >> offset;
 
-#    ifdef ENABLE_SCRIPTING
-    auto& scriptEngine = GetContext()->GetScriptEngine();
-    for (uint32_t i = 0; i < numScripts; i++)
+    if (size == 0)
     {
-        uint32_t codeLength{};
-        packet >> codeLength;
-        auto code = std::string_view(reinterpret_cast<const char*>(packet.Read(codeLength)), codeLength);
-        scriptEngine.AddNetworkPlugin(code);
+        // No scripts
     }
-#    else
-    if (numScripts > 0)
+    else
     {
+#    ifdef ENABLE_SCRIPTING
+        auto chunksize = static_cast<int32_t>(packet.Header.Size - packet.BytesRead);
+        if (chunksize <= 0)
+        {
+            return;
+        }
+
+        if (offset == 0)
+        {
+            // Pause game actions until scripts are fully loaded
+            GameActions::ClearQueue();
+            GameActions::SuspendQueue();
+
+            _serverTickData.clear();
+        }
+
+        if (size > chunk_buffer.size())
+        {
+            chunk_buffer.resize(size);
+        }
+
+        auto statusMsg = FormatStringId(STR_MULTIPLAYER_DOWNLOADING_SCRIPTS, (offset + chunksize) / 1024, size / 1024);
+
+        auto intent = Intent(WC_NETWORK_STATUS);
+        intent.putExtra(INTENT_EXTRA_MESSAGE, statusMsg);
+        intent.putExtra(INTENT_EXTRA_CALLBACK, []() -> void { gNetwork.Close(); });
+        context_open_intent(&intent);
+
+        std::memcpy(&chunk_buffer[offset], const_cast<void*>(static_cast<const void*>(packet.Read(chunksize))), chunksize);
+        if (offset + chunksize == size)
+        {
+            size_t readOffset = 0;
+
+            auto numScripts = ReadFromVector<uint32_t>(chunk_buffer, readOffset);
+            auto& scriptEngine = GetContext()->GetScriptEngine();
+            for (uint32_t i = 0; i < numScripts; i++)
+            {
+                auto codeLength = ReadFromVector<uint32_t>(chunk_buffer, readOffset);
+                auto code = std::string_view(reinterpret_cast<const char*>(&chunk_buffer[readOffset]), codeLength);
+                readOffset += codeLength;
+                scriptEngine.AddNetworkPlugin(code);
+            }
+        }
+#    else
         connection.SetLastDisconnectReason("The server requires plugin support.");
         Close();
-    }
 #    endif
+    }
 }
 
 void NetworkBase::Client_Handle_GAMESTATE(NetworkConnection& connection, NetworkPacket& packet)

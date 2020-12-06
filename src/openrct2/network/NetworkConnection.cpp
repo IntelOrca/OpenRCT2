@@ -133,6 +133,12 @@ void NetworkConnection::QueuePacket(NetworkPacket&& packet, bool front)
 {
     if (AuthStatus == NetworkAuth::Ok || !packet.CommandRequiresAuth())
     {
+        if (packet.Data.size() > MAX_PACKET_SIZE)
+        {
+            log_error("Packet data exceeds maximum packet size.");
+            return;
+        }
+
         packet.Header.Size = static_cast<uint16_t>(packet.Data.size());
         if (front)
         {
