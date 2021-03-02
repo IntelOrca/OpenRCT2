@@ -37,8 +37,7 @@ namespace Path
     const utf8* GetExtension(const utf8* path);
     utf8* GetAbsolute(utf8* buffer, size_t bufferSize, const utf8* relativePath);
     std::string GetAbsolute(const std::string& relative);
-    bool Equals(const std::string& a, const std::string& b);
-    bool Equals(const utf8* a, const utf8* b);
+    bool Equals(std::string_view a, std::string_view b);
 
     /**
      * Checks if the given path is a file. If not, checks to see if

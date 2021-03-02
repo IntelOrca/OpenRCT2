@@ -240,12 +240,7 @@ namespace Path
         return GetAbsolute(absolute, sizeof(absolute), relative.c_str());
     }
 
-    bool Equals(const std::string& a, const std::string& b)
-    {
-        return String::Equals(a.c_str(), b.c_str());
-    }
-
-    bool Equals(const utf8* a, const utf8* b)
+    bool Equals(std::string_view a, std::string_view b)
     {
         bool ignoreCase = false;
 #ifdef _WIN32
