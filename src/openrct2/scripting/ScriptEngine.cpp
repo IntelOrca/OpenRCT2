@@ -420,10 +420,10 @@ void ScriptEngine::Initialise()
     dukglue_register_global(ctx, std::make_shared<ScScenario>(), "scenario");
 
     _initialised = true;
-    _pluginsLoaded = false;
-    _pluginsStarted = false;
+    _transientPluginsEnabled = false;
+    _transientPluginsStarted = false;
 
-    InitSharedStorage();
+    LoadSharedStorage();
 }
 
 void ScriptEngine::RefreshPlugins()
@@ -460,7 +460,7 @@ void ScriptEngine::RefreshPlugins()
     }
 
     // Turn on hot reload if not already enabled
-    if (!_hotReloading && gConfigPlugin.enable_hot_reloading && network_get_mode() == NETWORK_MODE_NONE)
+    if (!_hotReloadingInitialised && gConfigPlugin.enable_hot_reloading && network_get_mode() == NETWORK_MODE_NONE)
     {
         SetupHotReloading();
     }
@@ -541,6 +541,8 @@ void ScriptEngine::RegisterPlugin(std::string_view path)
 
 void ScriptEngine::StartIntransientPlugins()
 {
+    LoadSharedStorage();
+
     for (auto& plugin : _plugins)
     {
         if (!plugin->HasStarted() && !plugin->IsTransient())
@@ -569,38 +571,9 @@ void ScriptEngine::StopUnloadRegisterAllPlugins()
     }
 }
 
-void ScriptEngine::LoadPlugins()
+void ScriptEngine::LoadTransientPlugins()
 {
-    if (!_initialised)
-    {
-        Initialise();
-    }
-    if (_pluginsLoaded)
-    {
-        UnloadPlugins();
-    }
-
-    auto base = _env.GetDirectoryPath(DIRBASE::USER, DIRID::PLUGIN);
-    if (Path::DirectoryExists(base))
-    {
-        auto pattern = Path::Combine(base, "*.js");
-        auto scanner = std::unique_ptr<IFileScanner>(Path::ScanDirectory(pattern, true));
-        while (scanner->Next())
-        {
-            auto path = std::string(scanner->GetPath());
-            if (ShouldLoadScript(path))
-            {
-                LoadPlugin(path);
-            }
-        }
-
-        if (gConfigPlugin.enable_hot_reloading && network_get_mode() == NETWORK_MODE_NONE)
-        {
-            SetupHotReloading();
-        }
-    }
-    _pluginsLoaded = true;
-    _pluginsStarted = false;
+    _transientPluginsEnabled = true;
 }
 
 void ScriptEngine::LoadPlugin(const std::string& path)
@@ -694,12 +667,25 @@ void ScriptEngine::SetupHotReloading()
                 std::lock_guard<std::mutex> guard(_changedPluginFilesMutex);
                 _changedPluginFiles.emplace(path);
             };
-            _hotReloading = true;
+            _hotReloadingInitialised = true;
         }
     }
     catch (const std::exception& e)
     {
         Console::Error::WriteLine("Unable to enable hot reloading of plugins: %s", e.what());
+    }
+}
+
+void ScriptEngine::DoAutoReloadPluginCheck()
+{
+    if (_hotReloadingInitialised)
+    {
+        auto tick = Platform::GetTicks();
+        if (tick - _lastHotReloadCheckTick > 1000)
+        {
+            AutoReloadPlugins();
+            _lastHotReloadCheckTick = tick;
+        }
     }
 }
 
@@ -735,39 +721,50 @@ void ScriptEngine::AutoReloadPlugins()
     }
 }
 
-void ScriptEngine::UnloadPlugins()
+void ScriptEngine::UnloadTransientPlugins()
 {
-    StopPlugins();
+    // Stop them all first
     for (auto& plugin : _plugins)
     {
-        LogPluginInfo(plugin, "Unloaded");
+        if (plugin->IsTransient())
+        {
+            StopPlugin(plugin);
+        }
     }
-    _plugins.clear();
-    _pluginsLoaded = false;
-    _pluginsStarted = false;
+
+    // Now unload them
+    for (auto& plugin : _plugins)
+    {
+        UnloadPlugin(plugin);
+    }
+
+    _transientPluginsEnabled = false;
+    _transientPluginsStarted = false;
 }
 
-void ScriptEngine::StartPlugins()
+void ScriptEngine::StartTransientPlugins()
 {
     LoadSharedStorage();
 
+    // Load transient plugins
     for (auto& plugin : _plugins)
     {
-        if (!plugin->HasStarted() && ShouldStartPlugin(plugin))
+        if (plugin->IsTransient() && !plugin->IsLoaded() && ShouldStartPlugin(plugin))
         {
-            ScriptExecutionInfo::PluginScope scope(_execInfo, plugin, false);
-            try
-            {
-                LogPluginInfo(plugin, "Started");
-                plugin->Start();
-            }
-            catch (const std::exception& e)
-            {
-                _console.WriteLineError(e.what());
-            }
+            LoadPlugin(plugin);
         }
     }
-    _pluginsStarted = true;
+
+    // Start transient plugins
+    for (auto& plugin : _plugins)
+    {
+        if (plugin->IsTransient() && plugin->IsLoaded() && !plugin->HasStarted())
+        {
+            StartPlugin(plugin);
+        }
+    }
+
+    _transientPluginsStarted = true;
 }
 
 bool ScriptEngine::ShouldStartPlugin(const std::shared_ptr<Plugin>& plugin)
@@ -786,19 +783,6 @@ bool ScriptEngine::ShouldStartPlugin(const std::shared_ptr<Plugin>& plugin)
     return true;
 }
 
-void ScriptEngine::StopPlugins()
-{
-    for (auto& plugin : _plugins)
-    {
-        if (plugin->HasStarted())
-        {
-            StopPlugin(plugin);
-            LogPluginInfo(plugin, "Stopped");
-        }
-    }
-    _pluginsStarted = false;
-}
-
 void ScriptEngine::Update()
 {
     if (!_initialised)
@@ -807,26 +791,15 @@ void ScriptEngine::Update()
         RefreshPlugins();
     }
 
-    if (_pluginsLoaded)
+    if (_transientPluginsEnabled && !_transientPluginsStarted)
     {
-        if (!_pluginsStarted)
-        {
-            StartPlugins();
-        }
-        else
-        {
-            auto tick = Platform::GetTicks();
-            if (tick - _lastHotReloadCheckTick > 1000)
-            {
-                AutoReloadPlugins();
-                _lastHotReloadCheckTick = tick;
-            }
-        }
+        StartTransientPlugins();
     }
 
     UpdateIntervals();
     UpdateSockets();
     ProcessREPL();
+    DoAutoReloadPluginCheck();
 }
 
 void ScriptEngine::ProcessREPL()

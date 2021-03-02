@@ -570,14 +570,14 @@ void game_load_init()
 void game_load_scripts()
 {
 #ifdef ENABLE_SCRIPTING
-    GetContext()->GetScriptEngine().LoadPlugins();
+    GetContext()->GetScriptEngine().LoadTransientPlugins();
 #endif
 }
 
 void game_unload_scripts()
 {
 #ifdef ENABLE_SCRIPTING
-    GetContext()->GetScriptEngine().UnloadPlugins();
+    GetContext()->GetScriptEngine().UnloadTransientPlugins();
 #endif
 }
 

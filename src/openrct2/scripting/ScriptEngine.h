@@ -140,9 +140,9 @@ namespace OpenRCT2::Scripting
         IPlatformEnvironment& _env;
         DukContext _context;
         bool _initialised{};
-        bool _hotReloading{};
-        bool _pluginsLoaded{};
-        bool _pluginsStarted{};
+        bool _hotReloadingInitialised{};
+        bool _transientPluginsEnabled{};
+        bool _transientPluginsStarted{};
         std::queue<std::tuple<std::promise<void>, std::string>> _evalQueue;
         std::vector<std::shared_ptr<Plugin>> _plugins;
         uint32_t _lastHotReloadCheckTick{};
@@ -196,8 +196,8 @@ namespace OpenRCT2::Scripting
             return _plugins;
         }
 
-        void LoadPlugins();
-        void UnloadPlugins();
+        void LoadTransientPlugins();
+        void UnloadTransientPlugins();
         void Update();
         std::future<void> Eval(const std::string& s);
         DukValue ExecutePluginCall(
@@ -239,8 +239,7 @@ namespace OpenRCT2::Scripting
         void UnregisterPlugin(std::string_view path);
         void RegisterPlugin(std::string_view path);
         void StartIntransientPlugins();
-        void StartPlugins();
-        void StopPlugins();
+        void StartTransientPlugins();
         void LoadPlugin(const std::string& path);
         void LoadPlugin(std::shared_ptr<Plugin>& plugin);
         void UnloadPlugin(std::shared_ptr<Plugin>& plugin);
@@ -250,6 +249,7 @@ namespace OpenRCT2::Scripting
         static bool ShouldLoadScript(std::string_view path);
         bool ShouldStartPlugin(const std::shared_ptr<Plugin>& plugin);
         void SetupHotReloading();
+        void DoAutoReloadPluginCheck();
         void AutoReloadPlugins();
         void ProcessREPL();
         void RemoveCustomGameActions(const std::shared_ptr<Plugin>& plugin);
