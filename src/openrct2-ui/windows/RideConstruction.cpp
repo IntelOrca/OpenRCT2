@@ -2390,10 +2390,10 @@ static void sub_6CBCE2(
     if (ride == nullptr)
         return;
 
-    int16_t preserveMapSizeUnits = gMapSizeUnits;
-    int16_t preserveMapSizeMinus2 = gMapSizeMinus2;
-    int16_t preserveMapSize = gMapSize;
-    int16_t preserveMapSizeMaxXY = gMapSizeMaxXY;
+    int32_t preserveMapSizeUnits = gMapSizeUnits;
+    int32_t preserveMapSizeMinus2 = gMapSizeMinus2;
+    int32_t preserveMapSize = gMapSize;
+    int32_t preserveMapSizeMaxXY = gMapSizeMaxXY;
 
     gMapSizeUnits = MAXIMUM_TILE_START_XY;
     gMapSizeMinus2 = ((MAXIMUM_MAP_SIZE_TECHNICAL - 1) * 32) + 286;

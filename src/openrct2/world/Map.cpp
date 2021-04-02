@@ -90,15 +90,15 @@ uint8_t gMapSelectArrowDirection;
 
 uint8_t gMapGroundFlags;
 
-uint16_t gWidePathTileLoopX;
-uint16_t gWidePathTileLoopY;
-uint16_t gGrassSceneryTileLoopPosition;
+uint32_t gWidePathTileLoopX;
+uint32_t gWidePathTileLoopY;
+uint32_t gGrassSceneryTileLoopPosition;
 
-int16_t gMapSizeUnits;
-int16_t gMapSizeMinus2;
-int16_t gMapSize;
-int16_t gMapSizeMaxXY;
-int16_t gMapBaseZ;
+int32_t gMapSizeUnits;
+int32_t gMapSizeMinus2;
+int32_t gMapSize;
+int32_t gMapSizeMaxXY;
+int32_t gMapBaseZ;
 
 TileElement gTileElements[MAX_TILE_ELEMENTS_WITH_SPARE_ROOM];
 TileElement* gTileElementTilePointers[MAX_TILE_TILE_ELEMENT_POINTERS];
@@ -114,8 +114,8 @@ bool gClearSmallScenery;
 bool gClearLargeScenery;
 bool gClearFootpath;
 
-uint16_t gLandRemainingOwnershipSales;
-uint16_t gLandRemainingConstructionSales;
+uint32_t gLandRemainingOwnershipSales;
+uint32_t gLandRemainingConstructionSales;
 
 bool gMapLandRightsUpdateSuccess;
 

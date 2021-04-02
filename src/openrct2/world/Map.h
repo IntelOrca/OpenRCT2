@@ -23,7 +23,7 @@
 #define MAXIMUM_WATER_HEIGHT 58
 
 #define MINIMUM_MAP_SIZE_TECHNICAL 15
-#define MAXIMUM_MAP_SIZE_TECHNICAL 256
+#define MAXIMUM_MAP_SIZE_TECHNICAL 1024
 #define MINIMUM_MAP_SIZE_PRACTICAL (MINIMUM_MAP_SIZE_TECHNICAL - 2)
 #define MAXIMUM_MAP_SIZE_PRACTICAL (MAXIMUM_MAP_SIZE_TECHNICAL - 2)
 constexpr const int32_t MAXIMUM_MAP_SIZE_BIG = COORDS_XY_STEP * MAXIMUM_MAP_SIZE_TECHNICAL;
@@ -33,7 +33,7 @@ constexpr const int32_t MINIMUM_LAND_HEIGHT_BIG = MINIMUM_LAND_HEIGHT * COORDS_Z
 
 #define MAP_MINIMUM_X_Y (-MAXIMUM_MAP_SIZE_TECHNICAL)
 
-constexpr const uint32_t MAX_TILE_ELEMENTS_WITH_SPARE_ROOM = 0x100000;
+constexpr const uint32_t MAX_TILE_ELEMENTS_WITH_SPARE_ROOM = 0x1000000;
 constexpr const uint32_t MAX_TILE_ELEMENTS = MAX_TILE_ELEMENTS_WITH_SPARE_ROOM - 512;
 #define MAX_TILE_TILE_ELEMENT_POINTERS (MAXIMUM_MAP_SIZE_TECHNICAL * MAXIMUM_MAP_SIZE_TECHNICAL)
 #define MAX_PEEP_SPAWNS 2
@@ -98,15 +98,15 @@ enum
 extern const std::array<CoordsXY, 8> CoordsDirectionDelta;
 extern const TileCoordsXY TileDirectionDelta[];
 
-extern uint16_t gWidePathTileLoopX;
-extern uint16_t gWidePathTileLoopY;
-extern uint16_t gGrassSceneryTileLoopPosition;
+extern uint32_t gWidePathTileLoopX;
+extern uint32_t gWidePathTileLoopY;
+extern uint32_t gGrassSceneryTileLoopPosition;
 
-extern int16_t gMapSizeUnits;
-extern int16_t gMapSizeMinus2;
-extern int16_t gMapSize;
-extern int16_t gMapSizeMaxXY;
-extern int16_t gMapBaseZ;
+extern int32_t gMapSizeUnits;
+extern int32_t gMapSizeMinus2;
+extern int32_t gMapSize;
+extern int32_t gMapSizeMaxXY;
+extern int32_t gMapBaseZ;
 
 extern uint16_t gMapSelectFlags;
 extern uint16_t gMapSelectType;
@@ -135,8 +135,8 @@ extern bool gClearSmallScenery;
 extern bool gClearLargeScenery;
 extern bool gClearFootpath;
 
-extern uint16_t gLandRemainingOwnershipSales;
-extern uint16_t gLandRemainingConstructionSales;
+extern uint32_t gLandRemainingOwnershipSales;
+extern uint32_t gLandRemainingConstructionSales;
 
 extern bool gMapLandRightsUpdateSuccess;
 

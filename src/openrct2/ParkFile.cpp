@@ -534,7 +534,7 @@ namespace OpenRCT2
         void ReadWriteTilesChunk(OrcaStream& os)
         {
             auto found = os.ReadWriteChunk(ParkFileChunkType::TILES, [](OrcaStream::ChunkStream& cs) {
-                cs.ReadWriteAs<int16_t, uint32_t>(gMapSize); // x
+                cs.ReadWriteAs<int32_t, uint32_t>(gMapSize); // x
                 cs.Write<uint32_t>(gMapSize);                // y
 
                 if (cs.GetMode() == OrcaStream::Mode::READING)
