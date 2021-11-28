@@ -340,16 +340,16 @@ static uint32_t get_surface_image(
     return image;
 }
 
-static uint32_t get_surface_pattern(uint8_t index, int32_t offset)
+static ImageId get_surface_pattern(uint8_t index, int32_t offset)
 {
-    auto image = static_cast<uint32_t>(SPR_NONE);
+    ImageId image;
     auto obj = get_surface_object(index);
     if (obj != nullptr)
     {
-        image = obj->PatternBaseImageId + offset;
+        image = ImageId(obj->PatternBaseImageId + offset);
         if (obj->Colour != 255)
         {
-            image |= SPRITE_ID_PALETTE_COLOUR_1(obj->Colour);
+            image = image.WithPrimary(obj->Colour);
         }
     }
     return image;

@@ -7,6 +7,8 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
+#include "../Paint.h"
+
 #include "../../Game.h"
 #include "../../common.h"
 #include "../../config/Config.h"
@@ -21,7 +23,6 @@
 #include "../../world/Scenery.h"
 #include "../../world/TileInspector.h"
 #include "../../world/Wall.h"
-#include "../Paint.h"
 #include "Paint.TileElement.h"
 
 static constexpr const uint8_t byte_9A406C[] = {
@@ -42,101 +43,55 @@ static constexpr const uint8_t byte_9A40CC[] = {
 
 static void PaintWallDoor(
     paint_session* session, uint32_t imageId, WallSceneryEntry* wallEntry, uint32_t imageColourFlags, uint32_t tertiaryColour,
-    uint32_t dword_141F710, CoordsXYZ offset, CoordsXYZ boundsR1, CoordsXYZ boundsR1_, CoordsXYZ boundsR2, CoordsXYZ boundsR2_,
-    CoordsXYZ boundsL1, CoordsXYZ boundsL1_)
+    uint32_t overrideImageFlags, CoordsXYZ offset, CoordsXYZ boundsR1, CoordsXYZ boundsR1_, CoordsXYZ bbLengthR,
+    CoordsXYZ bbOffsetR, CoordsXYZ bbLengthL, CoordsXYZ bbOffsetL)
 {
     if (wallEntry->flags & WALL_SCENERY_HAS_PRIMARY_COLOUR)
     {
         imageId |= imageColourFlags;
     }
 
-    if (dword_141F710 != 0)
+    if (overrideImageFlags != 0)
     {
-        imageId = (imageId & 0x7FFFF) | dword_141F710;
+        imageId = (imageId & 0x7FFFF) | overrideImageFlags;
     }
 
+    auto newImageId0 = ImageId::FromUInt32(imageId + 0).WithTertiary(tertiaryColour);
+    auto newImageId1 = ImageId::FromUInt32(imageId + 1).WithTertiary(tertiaryColour);
     if (wallEntry->flags & WALL_SCENERY_IS_DOUBLE_SIDED)
     {
-        paint_struct* ps;
-
-        ps = PaintAddImageAsParent(session, imageId, offset, boundsR1, boundsR1_);
-        if (ps != nullptr)
-        {
-            ps->tertiary_colour = tertiaryColour;
-        }
-
-        ps = PaintAddImageAsParent(session, imageId + 1, offset, boundsR2, boundsR2_);
-        if (ps != nullptr)
-        {
-            ps->tertiary_colour = tertiaryColour;
-        }
+        PaintAddImageAsParent(session, newImageId0, offset, boundsR1, boundsR1_);
+        PaintAddImageAsParent(session, newImageId1, offset, bbLengthR, bbOffsetR);
     }
     else
     {
-        paint_struct* ps;
-
-        ps = PaintAddImageAsParent(session, imageId, offset, boundsL1, boundsL1_);
-        if (ps != nullptr)
-        {
-            ps->tertiary_colour = tertiaryColour;
-        }
-
-        ps = PaintAddImageAsChild(
-            session, imageId + 1, static_cast<int8_t>(offset.x), static_cast<int8_t>(offset.y), boundsL1.x, boundsL1.y,
-            static_cast<int8_t>(boundsL1.z), offset.z, boundsL1_.x, boundsL1_.y, boundsL1_.z);
-        if (ps != nullptr)
-        {
-            ps->tertiary_colour = tertiaryColour;
-        }
+        PaintAddImageAsParent(session, newImageId0, offset, bbLengthL, bbOffsetL);
+        PaintAddImageAsChild(session, newImageId1, offset, bbLengthL, bbOffsetL);
     }
 }
 
 static void PaintWallWall(
-    paint_session* session, uint32_t frameNum, const WallSceneryEntry* wallEntry, uint32_t dword_141F710,
+    paint_session* session, uint32_t frameNum, const WallSceneryEntry* wallEntry, uint32_t imageOverrideFlags,
     uint32_t imageColourFlags, uint32_t dword_141F718, uint32_t tertiaryColour, uint32_t imageOffset, CoordsXYZ offset,
     CoordsXYZ bounds, CoordsXYZ boundsOffset)
 {
-    uint32_t baseImageId = wallEntry->image + imageOffset + frameNum;
-    uint32_t imageId = baseImageId;
-
-    if (wallEntry->flags & WALL_SCENERY_HAS_GLASS)
+    auto baseImageId = wallEntry->image + imageOffset + frameNum;
+    auto imageId = baseImageId;
+    if (wallEntry->flags & WALL_SCENERY_HAS_PRIMARY_COLOUR)
     {
-        if (wallEntry->flags & WALL_SCENERY_HAS_PRIMARY_COLOUR)
-        {
-            imageId |= imageColourFlags;
-        }
-
-        if (dword_141F710 != 0)
-        {
-            imageId = (imageId & 0x7FFFF) | dword_141F710;
-        }
-
-        PaintAddImageAsParent(session, imageId, offset, bounds, boundsOffset);
-        if (dword_141F710 == 0)
-        {
-            imageId = baseImageId + dword_141F718;
-            PaintAddImageAsChild(
-                session, imageId, static_cast<int8_t>(offset.x), static_cast<int8_t>(offset.y), bounds.x, bounds.y,
-                static_cast<int8_t>(bounds.z), offset.z, boundsOffset.x, boundsOffset.y, boundsOffset.z);
-        }
+        imageId |= imageColourFlags;
     }
-    else
+    if (imageOverrideFlags != 0)
     {
-        if (wallEntry->flags & WALL_SCENERY_HAS_PRIMARY_COLOUR)
-        {
-            imageId |= imageColourFlags;
-        }
+        imageId = (imageId & 0x7FFFF) | imageOverrideFlags;
+    }
 
-        if (dword_141F710 != 0)
-        {
-            imageId = (imageId & 0x7FFFF) | dword_141F710;
-        }
-
-        paint_struct* paint = PaintAddImageAsParent(session, imageId, offset, bounds, boundsOffset);
-        if (paint != nullptr)
-        {
-            paint->tertiary_colour = tertiaryColour;
-        }
+    auto newImageId = ImageId::FromUInt32(imageId).WithTertiary(tertiaryColour);
+    PaintAddImageAsParent(session, newImageId, offset, bounds, boundsOffset);
+    if ((wallEntry->flags & WALL_SCENERY_HAS_GLASS) && imageOverrideFlags == 0)
+    {
+        auto childImageId = ImageId::FromUInt32(baseImageId + dword_141F718).WithTertiary(tertiaryColour);
+        PaintAddImageAsChild(session, childImageId, offset, bounds, boundsOffset);
     }
 }
 /**
