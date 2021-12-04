@@ -129,8 +129,7 @@ static void ride_entrance_exit_paint(
     ImageId glassImageTemplate;
     if (hasGlass)
     {
-        auto glassPalette = GlassPaletteIds[colourPrimary];
-        glassImageTemplate = ImageId().WithRemap(glassPalette).WithBlended(true);
+        glassImageTemplate = ImageId().WithTransparancy(colourPrimary);
     }
 
     session->InteractionType = ViewportInteractionItem::Ride;
