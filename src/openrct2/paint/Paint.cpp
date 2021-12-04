@@ -865,12 +865,12 @@ paint_struct* PaintAddImageAsChild(
  * @param y (cx)
  * @return (!CF) success
  */
-bool PaintAttachToPreviousAttach(paint_session* session, uint32_t image_id, int32_t x, int32_t y)
+bool PaintAttachToPreviousAttach(paint_session* session, ImageId imageId, int32_t x, int32_t y)
 {
     auto* previousAttachedPS = session->LastAttachedPS;
     if (previousAttachedPS == nullptr)
     {
-        return PaintAttachToPreviousPS(session, image_id, x, y);
+        return PaintAttachToPreviousPS(session, imageId, x, y);
     }
 
     auto* ps = session->AllocateAttachedPaintEntry();
@@ -879,7 +879,7 @@ bool PaintAttachToPreviousAttach(paint_session* session, uint32_t image_id, int3
         return false;
     }
 
-    ps->image_id = ImageId::FromUInt32(image_id);
+    ps->image_id = imageId;
     ps->x = x;
     ps->y = y;
     ps->flags = 0;
