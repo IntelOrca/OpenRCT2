@@ -73,21 +73,12 @@ static void PaintRideEntranceExitScrollingText(
         0, 28, 28, 51, height + stationObj.Height, 2, 2, height + stationObj.Height);
 }
 
-static void ride_entrance_exit_paint(
-    paint_session* session, uint8_t direction, int32_t height, const EntranceElement& entranceEl)
+static void PaintRideEntranceExitLightEffects(paint_session* session, int32_t height, const EntranceElement& entranceEl)
 {
-    uint8_t isExit = entranceEl.GetEntranceType() == ENTRANCE_TYPE_RIDE_EXIT;
-
-    if (gTrackDesignSaveMode || (session->ViewFlags & VIEWPORT_FLAG_HIGHLIGHT_PATH_ISSUES))
-    {
-        if (entranceEl.GetRideIndex() != gTrackDesignSaveRideIndex)
-            return;
-    }
-
 #ifdef __ENABLE_LIGHTFX__
     if (lightfx_is_available())
     {
-        if (!isExit)
+        if (entranceEl.GetEntranceType() == ENTRANCE_TYPE_RIDE_ENTRANCE)
         {
             lightfx_add_3d_light_magic_from_drawing_tile(session->MapPosition, 0, 0, height + 45, LightType::Lantern3);
         }
@@ -109,8 +100,18 @@ static void ride_entrance_exit_paint(
         }
     }
 #endif
+}
 
-    auto ride = get_ride(entranceEl.GetRideIndex());
+static void PaintRideEntranceExit(paint_session* session, uint8_t direction, int32_t height, const EntranceElement& entranceEl)
+{
+    auto rideIndex = entranceEl.GetRideIndex();
+    if ((gTrackDesignSaveMode || (session->ViewFlags & VIEWPORT_FLAG_HIGHLIGHT_PATH_ISSUES))
+        && (rideIndex != gTrackDesignSaveRideIndex))
+    {
+        return;
+    }
+
+    auto ride = get_ride(rideIndex);
     if (ride == nullptr)
     {
         return;
@@ -122,6 +123,10 @@ static void ride_entrance_exit_paint(
         return;
     }
 
+    session->InteractionType = ViewportInteractionItem::Ride;
+
+    PaintRideEntranceExitLightEffects(session, height, entranceEl);
+
     auto hasGlass = (stationObj->Flags & STATION_OBJECT_FLAGS::IS_TRANSPARENT) != 0;
     auto colourPrimary = ride->track_colour[0].main;
     auto colourSecondary = ride->track_colour[0].additional;
@@ -131,8 +136,6 @@ static void ride_entrance_exit_paint(
     {
         glassImageTemplate = ImageId().WithTransparancy(colourPrimary);
     }
-
-    session->InteractionType = ViewportInteractionItem::Ride;
 
     if (entranceEl.IsGhost())
     {
@@ -149,6 +152,7 @@ static void ride_entrance_exit_paint(
     // Each entrance is split into 2 images for drawing
     // Certain entrance styles have another 2 images to draw for coloured windows
 
+    auto isExit = entranceEl.GetEntranceType() == ENTRANCE_TYPE_RIDE_EXIT;
     auto lengthY = (direction & 1) ? 28 : 2;
     auto lengthX = (direction & 1) ? 2 : 28;
     auto lengthZ = isExit ? 35 : 51;
@@ -178,14 +182,7 @@ static void ride_entrance_exit_paint(
             { (direction & 1) ? 28 : 2, (direction & 1) ? 2 : 28, height });
     }
 
-    if (direction & 1)
-    {
-        paint_util_push_tunnel_right(session, height, TUNNEL_SQUARE_FLAT);
-    }
-    else
-    {
-        paint_util_push_tunnel_left(session, height, TUNNEL_SQUARE_FLAT);
-    }
+    paint_util_push_tunnel_rotated(session, direction, height, TUNNEL_SQUARE_FLAT);
 
     if (!entranceEl.IsGhost())
         PaintRideEntranceExitScrollingText(session, entranceEl, *stationObj, direction, height);
@@ -244,19 +241,25 @@ static void PaintParkEntranceScrollingText(
     PaintAddImageAsChild(session, ImageId(imageIndex), { 0, 0, textHeight }, { 28, 28, 47 }, { 2, 2, textHeight });
 }
 
-static void park_entrance_paint(paint_session* session, uint8_t direction, int32_t height, const EntranceElement& entranceEl)
+static void PaintParkEntranceLightEffects(paint_session* session)
 {
-    if (gTrackDesignSaveMode || (session->ViewFlags & VIEWPORT_FLAG_HIGHLIGHT_PATH_ISSUES))
-        return;
-
 #ifdef __ENABLE_LIGHTFX__
     if (lightfx_is_available())
     {
         lightfx_add_3d_light_magic_from_drawing_tile(session->MapPosition, 0, 0, 155, LightType::Lantern3);
     }
 #endif
+}
+
+static void PaintParkEntrance(paint_session* session, uint8_t direction, int32_t height, const EntranceElement& entranceEl)
+{
+    if (gTrackDesignSaveMode || (session->ViewFlags & VIEWPORT_FLAG_HIGHLIGHT_PATH_ISSUES))
+        return;
+
+    PaintParkEntranceLightEffects(session);
 
     session->InteractionType = ViewportInteractionItem::ParkEntrance;
+
     ImageId imageTemplate;
     if (entranceEl.IsGhost())
     {
@@ -345,10 +348,10 @@ void PaintEntrance(paint_session* session, uint8_t direction, int32_t height, co
     {
         case ENTRANCE_TYPE_RIDE_ENTRANCE:
         case ENTRANCE_TYPE_RIDE_EXIT:
-            ride_entrance_exit_paint(session, direction, height, entranceElement);
+            PaintRideEntranceExit(session, direction, height, entranceElement);
             break;
         case ENTRANCE_TYPE_PARK_ENTRANCE:
-            park_entrance_paint(session, direction, height, entranceElement);
+            PaintParkEntrance(session, direction, height, entranceElement);
             break;
     }
 }
