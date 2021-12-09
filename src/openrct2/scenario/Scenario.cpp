@@ -17,6 +17,9 @@
 #include "../OpenRCT2.h"
 #include "../ParkImporter.h"
 #include "../PlatformEnvironment.h"
+#include "../actions/FootpathPlaceAction.h"
+#include "../actions/LandSetRightsAction.h"
+#include "../actions/PlaceParkEntranceAction.h"
 #include "../audio/audio.h"
 #include "../config/Config.h"
 #include "../core/BitSet.hpp"
@@ -27,6 +30,7 @@
 #include "../entity/Guest.h"
 #include "../entity/Staff.h"
 #include "../interface/Viewport.h"
+#include "../interface/Window_internal.h"
 #include "../localisation/Date.h"
 #include "../localisation/Localisation.h"
 #include "../management/Award.h"
@@ -44,6 +48,8 @@
 #include "../rct12/RCT12.h"
 #include "../ride/Ride.h"
 #include "../ride/Track.h"
+#include "../ui/UiContext.h"
+#include "../ui/WindowManager.h"
 #include "../util/SawyerCoding.h"
 #include "../util/Util.h"
 #include "../windows/Intent.h"
@@ -52,6 +58,7 @@
 #include "../world/Map.h"
 #include "../world/Park.h"
 #include "../world/Scenery.h"
+#include "../world/Surface.h"
 #include "../world/Water.h"
 #include "ScenarioRepository.h"
 #include "ScenarioSources.h"
@@ -922,4 +929,59 @@ bool ObjectiveNeedsMoney(const uint8_t objective)
     }
 
     return false;
+}
+
+static void ExecuteAction(const GameAction& action)
+{
+    GameActions::Execute(&action);
+}
+
+void StartSandboxPark()
+{
+    OpenRCT2::GetContext()->GetGameState()->InitAll(DEFAULT_MAP_SIZE);
+    gScenarioCategory = SCENARIO_CATEGORY_OTHER;
+    gScenarioName = language_get_string(STR_MY_NEW_SCENARIO);
+    gScenarioDetails = "";
+    gScenarioObjective.Type = OBJECTIVE_HAVE_FUN;
+
+    gCheatsSandboxMode = true;
+    gParkFlags |= PARK_FLAGS_NO_MONEY_SCENARIO;
+    gParkFlags |= PARK_FLAGS_NO_MONEY;
+    gParkFlags |= PARK_FLAGS_UNLOCK_ALL_PRICES;
+
+    // Setup the map
+    gScreenFlags = SCREEN_FLAGS_EDITOR;
+
+    auto x = (gMapSize.x / 2) * 32;
+    auto z = 14 * 8;
+
+    // Own all the land
+    MapRange range(2 * 32, 2 * 32, (gMapSize.x - 4) * 32, (gMapSize.y - 4) * 32);
+    ExecuteAction(LandSetRightsAction(range, LandSetRightSetting::SetOwnershipWithChecks, OWNERSHIP_OWNED));
+
+    // Place a park entrance
+    CoordsXYZD parkPos(x, 64, z, 1);
+    ExecuteAction(PlaceParkEntranceAction(parkPos, 0));
+
+    // Place some path
+    for (int i = 0; i < 12; i++)
+    {
+        CoordsXYZ pathPosA(x, (1 + i) * 32, z);
+        ExecuteAction(FootpathPlaceAction(pathPosA, 0, 0, 0));
+    }
+
+    gScreenFlags = SCREEN_FLAGS_PLAYING;
+
+    ResearchFix();
+    research_items_make_all_researched();
+    ResearchFix();
+
+    // Begin
+    scenario_begin();
+    auto mainWindow = window_get_main();
+    if (mainWindow != nullptr)
+    {
+        gCurrentRotation = 3;
+        mainWindow->SetLocation(parkPos);
+    }
 }

@@ -19,12 +19,14 @@
 #include <openrct2/actions/LoadOrQuitAction.h>
 #include <openrct2/config/Config.h>
 #include <openrct2/localisation/Localisation.h>
+#include <openrct2/scenario/Scenario.h>
 #include <openrct2/sprites.h>
 #include <openrct2/ui/UiContext.h>
 
 // clang-format off
 enum {
     WIDX_START_NEW_GAME,
+    WIDX_START_SANDBOX_GAME,
     WIDX_CONTINUE_SAVED_GAME,
     WIDX_MULTIPLAYER,
     WIDX_GAME_TOOLS,
@@ -33,9 +35,10 @@ enum {
 
 static ScreenRect _filterRect;
 static constexpr ScreenSize MenuButtonDims = { 82, 82 };
-static constexpr ScreenSize UpdateButtonDims = { MenuButtonDims.width * 4, 28 };
+static constexpr ScreenSize UpdateButtonDims = { MenuButtonDims.width * 5, 28 };
 
 static rct_widget window_title_menu_widgets[] = {
+    MakeWidget({0, UpdateButtonDims.height}, MenuButtonDims,   WindowWidgetType::ImgBtn, WindowColour::Tertiary,  SPR_MENU_NEW_GAME,       STR_START_NEW_GAME_TIP),
     MakeWidget({0, UpdateButtonDims.height}, MenuButtonDims,   WindowWidgetType::ImgBtn, WindowColour::Tertiary,  SPR_MENU_NEW_GAME,       STR_START_NEW_GAME_TIP),
     MakeWidget({0, UpdateButtonDims.height}, MenuButtonDims,   WindowWidgetType::ImgBtn, WindowColour::Tertiary,  SPR_MENU_LOAD_GAME,      STR_CONTINUE_SAVED_GAME_TIP),
     MakeWidget({0, UpdateButtonDims.height}, MenuButtonDims,   WindowWidgetType::ImgBtn, WindowColour::Tertiary,  SPR_G2_MENU_MULTIPLAYER, STR_SHOW_MULTIPLAYER_TIP),
@@ -128,6 +131,9 @@ static void WindowTitleMenuMouseup(rct_window* w, rct_widgetindex widgetIndex)
                 window_close_by_class(WC_SERVER_LIST);
                 WindowScenarioselectOpen(WindowTitleMenuScenarioselectCallback, false);
             }
+            break;
+        case WIDX_START_SANDBOX_GAME:
+            StartSandboxPark();
             break;
         case WIDX_CONTINUE_SAVED_GAME:
             windowToOpen = window_find_by_class(WC_LOADSAVE);
