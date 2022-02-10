@@ -19,6 +19,7 @@
 struct IObjectManager;
 struct IObjectRepository;
 struct IScenarioRepository;
+class LegacyConsole;
 enum class DrawingEngine : int32_t;
 enum class CursorID : uint8_t;
 
@@ -127,6 +128,7 @@ namespace OpenRCT2
 #ifdef ENABLE_SCRIPTING
         virtual Scripting::ScriptEngine& GetScriptEngine() abstract;
 #endif
+        virtual LegacyConsole* GetLegacyConsole() abstract;
         virtual ITrackDesignRepository* GetTrackDesignRepository() abstract;
         virtual IScenarioRepository* GetScenarioRepository() abstract;
         virtual IReplayManager* GetReplayManager() abstract;

@@ -17,6 +17,7 @@
 #    include "../world/Location.hpp"
 #    include "HookEngine.h"
 #    include "Plugin.h"
+#    include "ScriptConsole.h"
 
 #    include <future>
 #    include <list>
@@ -37,7 +38,6 @@ namespace GameActions
     class Result;
 }
 class FileWatcher;
-class InteractiveConsole;
 
 namespace OpenRCT2
 {
@@ -141,16 +141,15 @@ namespace OpenRCT2::Scripting
     class ScriptEngine
     {
     private:
-        InteractiveConsole& _console;
         IPlatformEnvironment& _env;
         DukContext _context;
         bool _initialised{};
         bool _pluginsLoaded{};
         bool _pluginsStarted{};
-        std::queue<std::tuple<std::promise<void>, std::string>> _evalQueue;
         std::vector<std::shared_ptr<Plugin>> _plugins;
         uint32_t _lastHotReloadCheckTick{};
         HookEngine _hookEngine;
+        ScriptConsole _console;
         ScriptExecutionInfo _execInfo;
         DukValue _sharedStorage;
 
@@ -176,7 +175,7 @@ namespace OpenRCT2::Scripting
 #    endif
 
     public:
-        ScriptEngine(InteractiveConsole& console, IPlatformEnvironment& env);
+        ScriptEngine(IPlatformEnvironment& env);
         ScriptEngine(ScriptEngine&) = delete;
 
         duk_context* GetContext()
@@ -199,11 +198,14 @@ namespace OpenRCT2::Scripting
         {
             return _plugins;
         }
+        ScriptConsole& GetConsole()
+        {
+            return _console;
+        }
 
         void LoadPlugins();
         void UnloadPlugins();
         void Tick();
-        std::future<void> Eval(const std::string& s);
         DukValue ExecutePluginCall(
             const std::shared_ptr<Plugin>& plugin, const DukValue& func, const std::vector<DukValue>& args,
             bool isGameStateMutable);

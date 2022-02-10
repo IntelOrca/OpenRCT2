@@ -38,6 +38,7 @@
 #include <openrct2/drawing/IDrawingEngine.h>
 #include <openrct2/interface/Chat.h>
 #include <openrct2/interface/InteractiveConsole.h>
+#include <openrct2/interface/LegacyConsole.h>
 #include <openrct2/localisation/StringIds.h>
 #include <openrct2/platform/Platform2.h>
 #include <openrct2/scripting/ScriptEngine.h>
@@ -131,9 +132,16 @@ public:
 
     void Initialise() override
     {
+        auto ctx = GetContext();
+
 #ifdef ENABLE_SCRIPTING
-        auto& scriptEngine = GetContext()->GetScriptEngine();
+        auto& scriptEngine = ctx->GetScriptEngine();
         UiScriptExtensions::Extend(scriptEngine);
+        _inGameConsole.SetPseudoConsole(&scriptEngine.GetConsole());
+#else
+        auto* legacyConsole = ctx->GetLegacyConsole();
+        _inGameConsole.SetPseudoConsole(legacyConsole);
+        legacyConsole->WriteHelp();
 #endif
     }
 

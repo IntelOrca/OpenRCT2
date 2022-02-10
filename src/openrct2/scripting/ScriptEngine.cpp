@@ -377,10 +377,10 @@ DukContext::~DukContext()
     duk_destroy_heap(_context);
 }
 
-ScriptEngine::ScriptEngine(InteractiveConsole& console, IPlatformEnvironment& env)
-    : _console(console)
-    , _env(env)
+ScriptEngine::ScriptEngine(IPlatformEnvironment& env)
+    : _env(env)
     , _hookEngine(*this)
+    , _console(*this)
 {
 }
 
@@ -677,39 +677,7 @@ void ScriptEngine::Tick()
 
     UpdateIntervals();
     UpdateSockets();
-    ProcessREPL();
-}
-
-void ScriptEngine::ProcessREPL()
-{
-    while (_evalQueue.size() > 0)
-    {
-        auto item = std::move(_evalQueue.front());
-        _evalQueue.pop();
-        auto promise = std::move(std::get<0>(item));
-        auto command = std::move(std::get<1>(item));
-        if (duk_peval_string(_context, command.c_str()) != 0)
-        {
-            std::string result = std::string(duk_safe_to_string(_context, -1));
-            _console.WriteLineError(result);
-        }
-        else if (duk_get_type(_context, -1) != DUK_TYPE_UNDEFINED)
-        {
-            auto result = Stringify(DukValue::copy_from_stack(_context, -1));
-            _console.WriteLine(result);
-        }
-        duk_pop(_context);
-        // Signal the promise so caller can continue
-        promise.set_value();
-    }
-}
-
-std::future<void> ScriptEngine::Eval(const std::string& s)
-{
-    std::promise<void> barrier;
-    auto future = barrier.get_future();
-    _evalQueue.emplace(std::move(barrier), s);
-    return future;
+    _console.Update();
 }
 
 DukValue ScriptEngine::ExecutePluginCall(

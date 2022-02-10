@@ -20,10 +20,10 @@ namespace OpenRCT2::Scripting
     class ScConsole
     {
     private:
-        InteractiveConsole& _console;
+        ScriptConsole& _console;
 
     public:
-        ScConsole(InteractiveConsole& console)
+        ScConsole(ScriptConsole& console)
             : _console(console)
         {
         }
@@ -53,7 +53,7 @@ namespace OpenRCT2::Scripting
 
         void executeLegacy(const std::string& command)
         {
-            _console.Execute(command);
+            _console.ExecuteLegacy(command);
         }
 
         static void Register(duk_context* ctx)

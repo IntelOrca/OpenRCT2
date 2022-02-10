@@ -36,19 +36,6 @@ static int32_t InGameConsoleGetLineHeight()
     return font_get_line_height(InGameConsoleGetFontSpriteBase());
 }
 
-InGameConsole::InGameConsole()
-{
-    InteractiveConsole::WriteLine(OPENRCT2_NAME " " OPENRCT2_VERSION);
-    InteractiveConsole::WriteLine("Type 'help' for a list of available commands. Type 'hide' to hide the console.");
-    InteractiveConsole::WriteLine("");
-    WritePrompt();
-}
-
-void InGameConsole::WritePrompt()
-{
-    InteractiveConsole::WriteLine("> ");
-}
-
 void InGameConsole::Input(ConsoleInput input)
 {
     switch (input)
@@ -58,19 +45,24 @@ void InGameConsole::Input(ConsoleInput input)
             RefreshCaret();
             break;
         case ConsoleInput::LineExecute:
-            if (_consoleCurrentLine[0] != '\0')
+            if (!IsWaitingForExecuteResponse())
             {
-                HistoryAdd(_consoleCurrentLine);
+                if (_consoleCurrentLine[0] != '\0')
+                {
+                    HistoryAdd(_consoleCurrentLine);
 
-                // Append text we are executing to prompt line
-                _consoleLines.back().append(_consoleCurrentLine);
+                    // Append text we are executing to prompt line
+                    std::string line = "> ";
+                    line.append(_consoleCurrentLine);
+                    _consoleLines.push_back(line);
 
-                Execute(_consoleCurrentLine);
-                WritePrompt();
-                ClearInput();
-                RefreshCaret();
+                    BeginExecute(_consoleCurrentLine);
+                }
+                else
+                {
+                    ScrollToEnd();
+                }
             }
-            ScrollToEnd();
             break;
         case ConsoleInput::HistoryPrevious:
             if (_consoleHistoryIndex > 0)
@@ -242,6 +234,8 @@ void InGameConsole::Invalidate() const
 
 void InGameConsole::Update()
 {
+    EndExecute();
+
     _consoleTopLeft = { 0, 0 };
     _consoleBottomRight = { context_get_width(), 322 };
 
@@ -368,4 +362,30 @@ int32_t InGameConsole::GetNumVisibleLines() const
         return 0;
     const int32_t drawableHeight = consoleHeight - 2 * lineHeight - 4; // input line, separator - padding
     return drawableHeight / lineHeight;
+}
+
+bool InGameConsole::IsWaitingForExecuteResponse() const
+{
+    return _executeFuture.valid();
+}
+
+void InGameConsole::BeginExecute(const std::string& s)
+{
+    _executeFuture = ExecuteAsync(s);
+}
+
+void InGameConsole::EndExecute()
+{
+    if (IsWaitingForExecuteResponse())
+    {
+        auto status = _executeFuture.wait_for(std::chrono::seconds(0));
+        if (status == std::future_status::ready)
+        {
+            _executeFuture = {};
+
+            ClearInput();
+            RefreshCaret();
+            ScrollToEnd();
+        }
+    }
 }

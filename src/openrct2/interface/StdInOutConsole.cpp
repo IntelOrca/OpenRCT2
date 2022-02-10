@@ -14,8 +14,8 @@
 
 #include "../Context.h"
 #include "../OpenRCT2.h"
+#include "../localisation/FormatCodes.h"
 #include "../platform/Platform2.h"
-#include "../scripting/ScriptEngine.h"
 #include "InteractiveConsole.h"
 
 #include <linenoise.hpp>
@@ -58,44 +58,11 @@ void StdInOutConsole::Start()
             {
                 lastPromptQuit = false;
                 linenoise::AddHistory(line.c_str());
-                Eval(line).wait();
+                ExecuteAsync(line).wait();
             }
         }
     });
     replThread.detach();
-}
-
-std::future<void> StdInOutConsole::Eval(const std::string& s)
-{
-#ifdef ENABLE_SCRIPTING
-    auto& scriptEngine = GetContext()->GetScriptEngine();
-    return scriptEngine.Eval(s);
-#else
-    // Push on-demand evaluations onto a queue so that it can be processed deterministically
-    // on the main thead at the right time.
-    std::promise<void> barrier;
-    auto future = barrier.get_future();
-    _evalQueue.emplace(std::move(barrier), s);
-    return future;
-#endif
-}
-
-void StdInOutConsole::ProcessEvalQueue()
-{
-#ifndef ENABLE_SCRIPTING
-    while (_evalQueue.size() > 0)
-    {
-        auto item = std::move(_evalQueue.front());
-        _evalQueue.pop();
-        auto promise = std::move(std::get<0>(item));
-        auto command = std::move(std::get<1>(item));
-
-        Execute(command);
-
-        // Signal the promise so caller can continue
-        promise.set_value();
-    }
-#endif
 }
 
 void StdInOutConsole::Clear()
@@ -106,6 +73,16 @@ void StdInOutConsole::Clear()
 void StdInOutConsole::Close()
 {
     openrct2_finish();
+}
+
+void StdInOutConsole::WriteLine(const std::string& s)
+{
+    WriteLine(s, FormatToken::ColourWindow2);
+}
+
+void StdInOutConsole::WriteLineError(const std::string& s)
+{
+    WriteLine(s, FormatToken::ColourRed);
 }
 
 void StdInOutConsole::WriteLine(const std::string& s, FormatToken colourFormat)

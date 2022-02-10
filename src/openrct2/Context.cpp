@@ -45,6 +45,7 @@
 #include "entity/EntityTweener.h"
 #include "interface/Chat.h"
 #include "interface/InteractiveConsole.h"
+#include "interface/LegacyConsole.h"
 #include "interface/Viewport.h"
 #include "localisation/Date.h"
 #include "localisation/Formatter.h"
@@ -111,6 +112,7 @@ namespace OpenRCT2
         std::unique_ptr<DiscordService> _discordService;
 #endif
         StdInOutConsole _stdInOutConsole;
+        LegacyConsole _legacyConsole;
 #ifdef ENABLE_SCRIPTING
         ScriptEngine _scriptEngine;
 #endif
@@ -157,7 +159,7 @@ namespace OpenRCT2
             , _uiContext(uiContext)
             , _localisationService(std::make_unique<LocalisationService>(env))
 #ifdef ENABLE_SCRIPTING
-            , _scriptEngine(_stdInOutConsole, *env)
+            , _scriptEngine(*env)
 #endif
 #ifndef DISABLE_NETWORK
             , _network(*this)
@@ -238,6 +240,11 @@ namespace OpenRCT2
         IObjectRepository& GetObjectRepository() override
         {
             return *_objectRepository;
+        }
+
+        LegacyConsole* GetLegacyConsole() override
+        {
+            return &_legacyConsole;
         }
 
         ITrackDesignRepository* GetTrackDesignRepository() override
@@ -947,6 +954,11 @@ namespace OpenRCT2
 #endif // DISABLE_NETWORK
 
             _stdInOutConsole.Start();
+#ifdef ENABLE_SCRIPTING
+            _stdInOutConsole.SetPseudoConsole(&_scriptEngine.GetConsole());
+#else
+            _stdInOutConsole.SetPseudoConsole(&_legacyConsole);
+#endif
             RunGameLoop();
         }
 
@@ -1156,7 +1168,7 @@ namespace OpenRCT2
 #ifdef ENABLE_SCRIPTING
             _scriptEngine.Tick();
 #endif
-            _stdInOutConsole.ProcessEvalQueue();
+            _legacyConsole.Update();
             _uiContext->Tick();
         }
 

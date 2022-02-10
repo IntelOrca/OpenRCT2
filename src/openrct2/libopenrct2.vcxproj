@@ -232,6 +232,8 @@
     <ClInclude Include="interface\FontFamilies.h" />
     <ClInclude Include="interface\Fonts.h" />
     <ClInclude Include="interface\InteractiveConsole.h" />
+    <ClInclude Include="interface\LegacyConsole.h" />
+    <ClInclude Include="interface\PseudoConsole.h" />
     <ClInclude Include="interface\Screenshot.h" />
     <ClInclude Include="interface\Viewport.h" />
     <ClInclude Include="interface\Widget.h" />
@@ -474,6 +476,7 @@
     <ClInclude Include="scripting\bindings\object\ScObject.hpp" />
     <ClInclude Include="scripting\bindings\world\ScPark.hpp" />
     <ClInclude Include="scripting\bindings\ride\ScRide.hpp" />
+    <ClInclude Include="scripting\ScriptConsole.h" />
     <ClInclude Include="scripting\ScriptEngine.h" />
     <ClInclude Include="scripting\bindings\world\ScScenario.hpp" />
     <ClInclude Include="scripting\bindings\network\ScSocket.hpp" />
@@ -701,6 +704,8 @@
     <ClCompile Include="interface\FontFamilies.cpp" />
     <ClCompile Include="interface\Fonts.cpp" />
     <ClCompile Include="interface\InteractiveConsole.cpp" />
+    <ClCompile Include="interface\LegacyConsole.cpp" />
+    <ClCompile Include="interface\PseudoConsole.cpp" />
     <ClCompile Include="interface\Screenshot.cpp" />
     <ClCompile Include="interface\StdInOutConsole.cpp" />
     <ClCompile Include="interface\Viewport.cpp" />
@@ -920,6 +925,7 @@
     <ClCompile Include="scripting\bindings\world\ScTileElement.cpp" />
     <ClCompile Include="scripting\HookEngine.cpp" />
     <ClCompile Include="scripting\Plugin.cpp" />
+    <ClCompile Include="scripting\ScriptConsole.cpp" />
     <ClCompile Include="scripting\ScriptEngine.cpp" />
     <ClCompile Include="title\TitleScreen.cpp" />
     <ClCompile Include="title\TitleSequence.cpp" />

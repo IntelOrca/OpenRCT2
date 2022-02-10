@@ -9,10 +9,14 @@
 
 #pragma once
 
+#include <deque>
 #include <openrct2/core/String.hpp>
 #include <openrct2/interface/InteractiveConsole.h>
 #include <openrct2/localisation/FormatCodes.h>
 #include <openrct2/world/Location.hpp>
+
+struct rct_drawpixelinfo;
+struct TextInputSession;
 
 namespace OpenRCT2::Ui
 {
@@ -40,9 +44,10 @@ namespace OpenRCT2::Ui
         int32_t _consoleHistoryCount = 0;
         size_t _selectionStart = 0;
         int32_t _caretScreenPosX = 0;
+        std::future<void> _executeFuture;
 
     public:
-        InGameConsole();
+        InGameConsole() = default;
         InGameConsole(const InGameConsole& src) = delete;
 
         bool IsOpen() const
@@ -68,9 +73,12 @@ namespace OpenRCT2::Ui
         void ClearInput();
         void ClearLine();
         void HistoryAdd(const utf8* src);
-        void WritePrompt();
         void ScrollToEnd();
         void Invalidate() const;
         int32_t GetNumVisibleLines() const;
+
+        bool IsWaitingForExecuteResponse() const;
+        void BeginExecute(const std::string& s);
+        void EndExecute();
     };
 } // namespace OpenRCT2::Ui
