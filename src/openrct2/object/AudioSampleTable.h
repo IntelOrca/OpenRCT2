@@ -31,6 +31,8 @@ private:
     std::vector<Entry> _entries;
 
 public:
+    std::vector<Entry>& GetEntries();
+
     /**
      * Read the entries from the given JSON into the table, but do not load anything.
      */
@@ -39,7 +41,12 @@ public:
     /**
      * Load all available entries from the given table.
      */
-    void LoadFrom(const AudioSampleTable& table, size_t index, size_t length);
+    void LoadFrom(const AudioSampleTable& table, size_t sourceIndex, size_t length);
+
+    /**
+     * Load a specific entry from the given table.
+     */
+    void LoadFrom(const AudioSampleTable& table, size_t index, size_t sourceIndex, size_t length);
 
     /**
      * Load all available entries.
@@ -51,7 +58,13 @@ public:
      */
     void Unload();
 
+    /**
+     * Load all the samples.
+     */
+    void LoadSamples();
+
     size_t GetCount() const;
     OpenRCT2::Audio::IAudioSource* GetSample(uint32_t index) const;
+    OpenRCT2::Audio::IAudioSource* LoadSample(uint32_t index) const;
     int32_t GetSampleModifier(uint32_t index) const;
 };
