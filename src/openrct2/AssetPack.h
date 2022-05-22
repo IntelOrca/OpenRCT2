@@ -12,7 +12,7 @@
 #include "core/FileSystem.hpp"
 #include "core/JsonFwd.hpp"
 #include "object/AudioSampleTable.h"
-#include "object/ImageTable.h"
+#include "object/ImageTable2.h"
 
 #include <string>
 #include <string_view>
@@ -30,7 +30,7 @@ namespace OpenRCT2
             size_t TableLength{};
         };
 
-        ImageTable _imageTable;
+        ImageTable2 _imageTable;
         AudioSampleTable _sampleTable;
         std::vector<Entry> _entries;
 
@@ -48,7 +48,7 @@ namespace OpenRCT2
         void Fetch();
         void Load();
         bool ContainsObject(std::string_view id) const;
-        ImageIndex AllocateImagesForObject(std::string_view id, uint32_t count);
+        void LoadImagesForObject(std::string_view id, ImageTable2& objectTable);
         void LoadSamplesForObject(std::string_view id, AudioSampleTable& objectTable);
 
     private:

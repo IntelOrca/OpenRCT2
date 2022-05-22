@@ -257,6 +257,7 @@ public:
     [[nodiscard]] uint64_t GetSize() const;
     [[nodiscard]] std::vector<uint8_t> GetData() const;
     [[nodiscard]] std::unique_ptr<OpenRCT2::IStream> GetStream() const;
+    const std::string& GetPath() const;
 };
 
 struct IReadObjectContext

@@ -190,16 +190,16 @@ void Object::SetSourceGames(const std::vector<ObjectSourceGame>& sourceGames)
 
 uint32_t Object::AllocateImages(uint32_t count)
 {
-    auto context = GetContext();
-    auto assetManager = context->GetAssetPackManager();
-    if (assetManager != nullptr)
-    {
-        auto imageIndex = assetManager->AllocateImagesForObject(_identifier, count);
-        if (imageIndex != ImageIndexUndefined)
-        {
-            return imageIndex;
-        }
-    }
+    // auto context = GetContext();
+    // auto assetManager = context->GetAssetPackManager();
+    // if (assetManager != nullptr)
+    // {
+    //     auto imageIndex = assetManager->AllocateImagesForObject(_identifier, count);
+    //     if (imageIndex != ImageIndexUndefined)
+    //     {
+    //         return imageIndex;
+    //     }
+    // }
     return gfx_object_allocate_images(GetImageTable().GetImages(), GetImageTable().GetCount());
 }
 
@@ -358,6 +358,11 @@ std::unique_ptr<IStream> ObjectAsset::GetStream() const
     {
     }
     return {};
+}
+
+const std::string& ObjectAsset::GetPath() const
+{
+    return _path;
 }
 
 #ifdef __WARN_SUGGEST_FINAL_METHODS__

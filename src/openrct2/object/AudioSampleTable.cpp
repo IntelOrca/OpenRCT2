@@ -19,90 +19,9 @@
 using namespace OpenRCT2;
 using namespace OpenRCT2::Audio;
 
-struct SourceInfo
-{
-    std::string Path;
-    std::vector<int32_t> Range{};
-};
-
 std::vector<AudioSampleTable::Entry>& AudioSampleTable::GetEntries()
 {
     return _entries;
-}
-
-static std::vector<int32_t> ParseRange(std::string_view s)
-{
-    // Currently only supports [###] or [###..###]
-    std::vector<int32_t> result = {};
-    if (s.length() >= 3 && s[0] == '[' && s[s.length() - 1] == ']')
-    {
-        s = s.substr(1, s.length() - 2);
-        auto parts = String::Split(s, "..");
-        if (parts.size() == 1)
-        {
-            result.push_back(std::stoi(parts[0]));
-        }
-        else
-        {
-            auto left = std::stoi(parts[0]);
-            auto right = std::stoi(parts[1]);
-            if (left <= right)
-            {
-                for (auto i = left; i <= right; i++)
-                {
-                    result.push_back(i);
-                }
-            }
-            else
-            {
-                for (auto i = right; i >= left; i--)
-                {
-                    result.push_back(i);
-                }
-            }
-        }
-    }
-    return result;
-}
-
-static SourceInfo ParseSource(std::string_view source)
-{
-    SourceInfo info;
-    if (String::StartsWith(source, "$RCT1:DATA/"))
-    {
-        auto name = source.substr(11);
-        auto rangeStart = name.find('[');
-        if (rangeStart != std::string::npos)
-        {
-            info.Range = ParseRange(name.substr(rangeStart));
-            name = name.substr(0, rangeStart);
-        }
-
-        auto env = GetContext()->GetPlatformEnvironment();
-        info.Path = env->FindFile(DIRBASE::RCT1, DIRID::DATA, name);
-    }
-    else if (String::StartsWith(source, "$RCT2:DATA/"))
-    {
-        auto name = source.substr(11);
-        auto rangeStart = name.find('[');
-        if (rangeStart != std::string::npos)
-        {
-            info.Range = ParseRange(name.substr(rangeStart));
-            name = name.substr(0, rangeStart);
-        }
-
-        auto env = GetContext()->GetPlatformEnvironment();
-        info.Path = env->FindFile(DIRBASE::RCT2, DIRID::DATA, name);
-    }
-    else if (String::StartsWith(source, "$["))
-    {
-        info.Range = ParseRange(source.substr(1));
-    }
-    else
-    {
-        info.Path = source;
-    }
-    return info;
 }
 
 void AudioSampleTable::ReadFromJson(IReadObjectContext* context, const json_t& root)
@@ -128,7 +47,7 @@ void AudioSampleTable::ReadFromJson(IReadObjectContext* context, const json_t& r
             }
 
             auto asset = context->GetAsset(sourceInfo.Path);
-            if (sourceInfo.Range.empty())
+            if (!sourceInfo.SourceRange)
             {
                 auto& entry = _entries.emplace_back();
                 entry.Asset = asset;
@@ -136,7 +55,8 @@ void AudioSampleTable::ReadFromJson(IReadObjectContext* context, const json_t& r
             }
             else
             {
-                for (auto index : sourceInfo.Range)
+                Range<int32_t> r(1, 5);
+                for (auto index : *sourceInfo.SourceRange)
                 {
                     auto& entry = _entries.emplace_back();
                     entry.Asset = asset;

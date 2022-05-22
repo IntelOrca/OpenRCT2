@@ -11,6 +11,8 @@
 
 #include "SmallSceneryObject.h"
 
+#include "../AssetPackManager.h"
+#include "../Context.h"
 #include "../core/IStream.hpp"
 #include "../core/Json.hpp"
 #include "../core/Memory.hpp"
@@ -23,6 +25,8 @@
 #include "../world/SmallScenery.h"
 
 #include <algorithm>
+
+using namespace OpenRCT2;
 
 void SmallSceneryObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStream* stream)
 {
@@ -73,9 +77,18 @@ void SmallSceneryObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStre
 
 void SmallSceneryObject::Load()
 {
+    auto context = GetContext();
+    auto assetManager = context->GetAssetPackManager();
+    if (assetManager != nullptr)
+    {
+        assetManager->LoadImagesForObject(GetIdentifier(), _imageTable2);
+    }
+    _imageTable2.Load();
+
     GetStringTable().Sort();
     _legacyType.name = language_allocate_object_string(GetName());
-    _legacyType.image = AllocateImages(GetImageTable().GetCount());
+    // _legacyType.image = AllocateImages(GetImageTable().GetCount());
+    _legacyType.image = _imageTable2.LoadImages();
 
     _legacyType.scenery_tab_id = OBJECT_ENTRY_INDEX_NULL;
 
@@ -89,6 +102,8 @@ void SmallSceneryObject::Load()
 
 void SmallSceneryObject::Unload()
 {
+    _imageTable2.Unload();
+
     language_free_object_string(_legacyType.name);
     gfx_object_free_images(_legacyType.image, GetImageTable().GetCount());
 
@@ -304,6 +319,7 @@ void SmallSceneryObject::ReadJson(IReadObjectContext* context, json_t& root)
     }
 
     PopulateTablesFromJson(context, root);
+    _imageTable2.ReadFromJson(context, root);
 }
 
 std::vector<uint8_t> SmallSceneryObject::ReadJsonFrameOffsets(json_t& jFrameOffsets)

@@ -57,16 +57,15 @@ void AssetPackManager::Reload()
     }
 }
 
-ImageIndex AssetPackManager::AllocateImagesForObject(std::string_view id, uint32_t count)
+void AssetPackManager::LoadImagesForObject(std::string_view id, ImageTable2& objectTable)
 {
     for (auto& assetPack : _assetPacks)
     {
         if (assetPack->ContainsObject(id))
         {
-            return assetPack->AllocateImagesForObject(id, count);
+            return assetPack->LoadImagesForObject(id, objectTable);
         }
     }
-    return ImageIndexUndefined;
 }
 
 void AssetPackManager::LoadSamplesForObject(std::string_view id, AudioSampleTable& objectTable)

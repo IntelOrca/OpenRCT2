@@ -16,6 +16,7 @@
 #include <vector>
 
 class AudioSampleTable;
+class ImageTable2;
 
 namespace OpenRCT2
 {
@@ -32,7 +33,7 @@ namespace OpenRCT2
         void Scan();
         void Reload();
 
-        ImageIndex AllocateImagesForObject(std::string_view id, uint32_t count);
+        void LoadImagesForObject(std::string_view id, ImageTable2& objectTable);
         void LoadSamplesForObject(std::string_view id, AudioSampleTable& objectTable);
 
     private:

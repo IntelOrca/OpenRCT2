@@ -83,15 +83,13 @@ bool AssetPack::ContainsObject(std::string_view id) const
     return it != _entries.end();
 }
 
-ImageIndex AssetPack::AllocateImagesForObject(std::string_view id, uint32_t count)
+void AssetPack::LoadImagesForObject(std::string_view id, ImageTable2& objectTable)
 {
     auto it = std::find_if(_entries.begin(), _entries.end(), [id](const Entry& entry) { return entry.ObjectId == id; });
     if (it != _entries.end())
     {
-        auto images = _imageTable.GetImages() + it->TableIndex;
-        return gfx_object_allocate_images(images, static_cast<uint32_t>(it->TableLength));
+        objectTable.LoadFrom(_imageTable, it->TableIndex, it->TableLength);
     }
-    return ImageIndexUndefined;
 }
 
 void AssetPack::LoadSamplesForObject(std::string_view id, AudioSampleTable& objectTable)
@@ -182,7 +180,7 @@ void AssetPack::Load()
         if (jObject.contains("images"))
         {
             entry.TableIndex = _imageTable.GetCount();
-            _imageTable.ReadJson(&loadContext, jObject);
+            _imageTable.ReadFromJson(&loadContext, jObject);
             entry.TableLength = _imageTable.GetCount() - entry.TableIndex;
         }
         else if (jObject.contains("samples"))

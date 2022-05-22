@@ -11,13 +11,11 @@
 
 #include "../audio/AudioSource.h"
 #include "../core/JsonFwd.hpp"
-#include "Object.h"
-
-#include <optional>
+#include "ResourceTable.h"
 
 struct IReadObjectContext;
 
-class AudioSampleTable
+class AudioSampleTable : public ResourceTable
 {
 private:
     struct Entry
