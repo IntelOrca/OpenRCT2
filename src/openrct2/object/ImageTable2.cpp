@@ -19,38 +19,49 @@
 
 using namespace OpenRCT2;
 
-void ImageTable2::ReadFromJson(IReadObjectContext* context, const json_t& root)
+void ImageTable2::ReadFromJson(IReadObjectContext& context, const json_t& root)
 {
     json_t jImages = root["images"];
-    if (jImages.is_array())
+    if (jImages.is_string())
+    {
+        ReadEntryFromJson(context, jImages);
+    }
+    else if (jImages.is_array())
     {
         for (auto& jImage : jImages)
         {
-            SourceInfo sourceInfo;
-            if (jImage.is_string())
-            {
-                sourceInfo = ParseSource(jImage.get<std::string>());
-            }
-            else if (jImage.is_object())
-            {
-                sourceInfo = ParseSource(jImage.at("path").get<std::string>());
-            }
+            ReadEntryFromJson(context, jImage);
+        }
+    }
+}
 
-            auto asset = context->GetAsset(sourceInfo.Path);
-            if (!sourceInfo.SourceRange)
-            {
-                auto& entry = _entries.emplace_back();
-                entry.Asset = asset;
-            }
-            else
-            {
-                for (auto index : *sourceInfo.SourceRange)
-                {
-                    auto& entry = _entries.emplace_back();
-                    entry.Asset = asset;
-                    entry.PathIndex = index;
-                }
-            }
+void ImageTable2::ReadEntryFromJson(IReadObjectContext& context, const json_t& jImage)
+{
+    SourceInfo sourceInfo;
+    if (jImage.is_string())
+    {
+        sourceInfo = ParseSource(jImage.get<std::string>());
+    }
+    else if (jImage.is_object())
+    {
+        sourceInfo = ParseSource(jImage.at("path").get<std::string>());
+    }
+
+    auto asset = context.GetAsset(sourceInfo.Path);
+    if (!sourceInfo.SourceRange)
+    {
+        auto& entry = _entries.emplace_back();
+        entry.Kind = sourceInfo.Kind;
+        entry.Asset = asset;
+    }
+    else
+    {
+        for (auto index : *sourceInfo.SourceRange)
+        {
+            auto& entry = _entries.emplace_back();
+            entry.Kind = sourceInfo.Kind;
+            entry.Asset = asset;
+            entry.PathIndex = index;
         }
     }
 }
@@ -79,6 +90,7 @@ void ImageTable2::LoadFrom(const ImageTable2& table, size_t index, size_t source
         auto stream = sourceEntry.Asset->GetStream();
         if (stream != nullptr)
         {
+            entry.Kind = sourceEntry.Kind;
             entry.Asset = sourceEntry.Asset;
             entry.PathIndex = sourceEntry.PathIndex;
         }
@@ -139,23 +151,47 @@ void ImageTable2::LoadImage(rct_g1_element& element, uint32_t sourceIndex)
     auto& entry = _entries.at(sourceIndex);
     if (entry.Asset)
     {
-        auto source = GetOrLoadSource(*entry.Asset);
-        if (source != nullptr)
+        auto source = GetOrLoadSource(entry);
+        if (source != nullptr && entry.PathIndex)
         {
-            source->LoadImage(element, sourceIndex);
+            source->LoadImage(element, *entry.PathIndex);
         }
     }
 }
 
-ImageSource* ImageTable2::GetOrLoadSource(ObjectAsset& asset)
+static rct_g1_element DuplicateImageData(const rct_g1_element& src)
 {
-    if (_imageSources.size() == 0)
-    {
-        auto source = LoadObjectImageSource(asset);
-        _imageSources.push_back(std::move(source));
-    }
-    return _imageSources.back().get();
+    rct_g1_element dst = src;
+    auto size = g1_calculate_data_size(&src);
+    dst.offset = new uint8_t[size];
+    std::memcpy(dst.offset, src.offset, size);
+    return dst;
 }
+
+class GxImageSource : public ImageSource
+{
+private:
+    std::optional<rct_gx> _gx;
+    size_t _numEntries{};
+    size_t _dataSize{};
+
+public:
+    GxImageSource(ObjectAsset& asset)
+    {
+        auto data = asset.GetData();
+        _gx = GfxLoadGx(data);
+    }
+
+    void LoadImage(rct_g1_element& element, uint32_t index) override
+    {
+        if (_gx && index < _gx->elements.size())
+        {
+            auto src = _gx->elements[index];
+            src.offset = src.offset + reinterpret_cast<size_t>(_gx->data.get());
+            element = DuplicateImageData(src);
+        }
+    }
+};
 
 class ObjectImageSource : public ImageSource
 {
@@ -163,9 +199,10 @@ private:
     std::unique_ptr<Object> _object;
 
 public:
-    ObjectImageSource(std::unique_ptr<Object> object)
-        : _object(std::move(object))
+    ObjectImageSource(ObjectAsset& asset)
     {
+        auto& objRepository = GetContext()->GetObjectRepository();
+        _object = ObjectFactory::CreateObjectFromLegacyFile(objRepository, asset.GetPath().c_str(), true);
     }
 
     void LoadImage(rct_g1_element& element, uint32_t index) override
@@ -179,26 +216,32 @@ public:
             element = DuplicateImageData(images[index]);
         }
     }
-
-private:
-    rct_g1_element DuplicateImageData(const rct_g1_element& src)
-    {
-        rct_g1_element dst = src;
-        auto size = g1_calculate_data_size(&src);
-        dst.offset = new uint8_t[size];
-        std::memcpy(dst.offset, src.offset, size);
-        return dst;
-    }
 };
 
-std::unique_ptr<ImageSource> ImageTable2::LoadObjectImageSource(ObjectAsset& asset)
+ImageSource* ImageTable2::GetOrLoadSource(Entry& entry)
 {
-    auto& objRepository = GetContext()->GetObjectRepository();
-    auto obj = ObjectFactory::CreateObjectFromLegacyFile(objRepository, asset.GetPath().c_str(), true);
-    if (obj != nullptr)
+    if (_imageSources.size() == 0)
     {
-        auto source = std::make_unique<ObjectImageSource>(std::move(obj));
-        return source;
+        std::unique_ptr<ImageSource> source;
+        switch (entry.Kind)
+        {
+            case SourceKind::Gx:
+                source = std::make_unique<GxImageSource>(*entry.Asset);
+                break;
+            case SourceKind::ObjData:
+                source = std::make_unique<ObjectImageSource>(*entry.Asset);
+                break;
+            default:
+                break;
+        }
+        if (source != nullptr)
+        {
+            _imageSources.push_back(std::move(source));
+        }
+        else
+        {
+            return nullptr;
+        }
     }
-    return nullptr;
+    return _imageSources.back().get();
 }

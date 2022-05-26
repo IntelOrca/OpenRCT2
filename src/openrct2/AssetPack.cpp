@@ -180,7 +180,7 @@ void AssetPack::Load()
         if (jObject.contains("images"))
         {
             entry.TableIndex = _imageTable.GetCount();
-            _imageTable.ReadFromJson(&loadContext, jObject);
+            _imageTable.ReadFromJson(loadContext, jObject);
             entry.TableLength = _imageTable.GetCount() - entry.TableIndex;
         }
         else if (jObject.contains("samples"))

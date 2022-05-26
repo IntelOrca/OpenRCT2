@@ -29,6 +29,7 @@ class ImageTable2 : public ResourceTable
 private:
     struct Entry
     {
+        SourceKind Kind{};
         std::optional<ObjectAsset> Asset;
         std::optional<uint32_t> PathIndex;
     };
@@ -44,7 +45,7 @@ public:
     /**
      * Read the entries from the given JSON into the table, but do not load anything.
      */
-    void ReadFromJson(IReadObjectContext* context, const json_t& root);
+    void ReadFromJson(IReadObjectContext& context, const json_t& root);
 
     /**
      * Load all available entries from the given table.
@@ -76,6 +77,6 @@ public:
     void LoadImage(rct_g1_element& element, uint32_t sourceIndex);
 
 private:
-    ImageSource* GetOrLoadSource(ObjectAsset& asset);
-    std::unique_ptr<ImageSource> LoadObjectImageSource(ObjectAsset& asset);
+    void ReadEntryFromJson(IReadObjectContext& context, const json_t& jImage);
+    ImageSource* GetOrLoadSource(Entry& entry);
 };

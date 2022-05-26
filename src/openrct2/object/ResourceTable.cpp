@@ -48,52 +48,55 @@ Range<int32_t> ResourceTable::ParseRange(std::string_view s)
 ResourceTable::SourceInfo ResourceTable::ParseSource(std::string_view source)
 {
     SourceInfo info;
-    if (String::StartsWith(source, "$RCT1:DATA/"))
+    auto base = source;
+    auto rangeStart = source.find('[');
+    if (rangeStart != std::string::npos)
     {
-        auto name = source.substr(11);
-        auto rangeStart = name.find('[');
-        if (rangeStart != std::string::npos)
-        {
-            info.SourceRange = ParseRange(name.substr(rangeStart));
-            name = name.substr(0, rangeStart);
-        }
-
-        auto env = GetContext()->GetPlatformEnvironment();
-        info.Path = env->FindFile(DIRBASE::RCT1, DIRID::DATA, name);
+        base = source.substr(0, rangeStart);
+        info.SourceRange = ParseRange(source.substr(rangeStart));
     }
-    else if (String::StartsWith(source, "$RCT2:DATA/"))
-    {
-        auto name = source.substr(11);
-        auto rangeStart = name.find('[');
-        if (rangeStart != std::string::npos)
-        {
-            info.SourceRange = ParseRange(name.substr(rangeStart));
-            name = name.substr(0, rangeStart);
-        }
 
-        auto env = GetContext()->GetPlatformEnvironment();
-        info.Path = env->FindFile(DIRBASE::RCT2, DIRID::DATA, name);
-    }
-    else if (String::StartsWith(source, "$RCT2:OBJDATA/"))
+    auto fileName = base;
+    auto fileNameStart = base.find('/');
+    if (fileNameStart != std::string::npos)
     {
-        auto name = source.substr(14);
-        auto rangeStart = name.find('[');
-        if (rangeStart != std::string::npos)
-        {
-            info.SourceRange = ParseRange(name.substr(rangeStart));
-            name = name.substr(0, rangeStart);
-        }
-
-        auto env = GetContext()->GetPlatformEnvironment();
-        info.Path = env->FindFile(DIRBASE::RCT2, DIRID::OBJECT, name);
-    }
-    else if (String::StartsWith(source, "$["))
-    {
-        info.SourceRange = ParseRange(source.substr(1));
+        fileName = base.substr(fileNameStart + 1);
     }
     else
     {
-        info.Path = source;
+        fileNameStart = base.find(':');
+        if (fileNameStart != std::string::npos)
+        {
+            fileName = base.substr(fileNameStart + 1);
+        }
+    }
+
+    if (String::StartsWith(base, "$LGX:"))
+    {
+        info.Kind = SourceKind::Gx;
+        info.Path = fileName;
+    }
+    else if (String::StartsWith(base, "$RCT1:DATA/"))
+    {
+        auto env = GetContext()->GetPlatformEnvironment();
+        info.Kind = SourceKind::Data;
+        info.Path = env->FindFile(DIRBASE::RCT1, DIRID::DATA, fileName);
+    }
+    else if (String::StartsWith(base, "$RCT2:DATA/"))
+    {
+        auto env = GetContext()->GetPlatformEnvironment();
+        info.Kind = SourceKind::Data;
+        info.Path = env->FindFile(DIRBASE::RCT2, DIRID::DATA, fileName);
+    }
+    else if (String::StartsWith(base, "$RCT2:OBJDATA/"))
+    {
+        auto env = GetContext()->GetPlatformEnvironment();
+        info.Kind = SourceKind::ObjData;
+        info.Path = env->FindFile(DIRBASE::RCT2, DIRID::OBJECT, fileName);
+    }
+    else if (!String::StartsWith(base, "$"))
+    {
+        info.Path = base;
     }
     return info;
 }

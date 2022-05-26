@@ -18,8 +18,17 @@
 class ResourceTable
 {
 protected:
+    enum class SourceKind
+    {
+        Other,
+        Data,
+        ObjData,
+        Gx
+    };
+
     struct SourceInfo
     {
+        SourceKind Kind{};
         std::string Path;
         std::optional<Range<int32_t>> SourceRange;
     };

@@ -319,7 +319,7 @@ void SmallSceneryObject::ReadJson(IReadObjectContext* context, json_t& root)
     }
 
     PopulateTablesFromJson(context, root);
-    _imageTable2.ReadFromJson(context, root);
+    _imageTable2.ReadFromJson(*context, root);
 }
 
 std::vector<uint8_t> SmallSceneryObject::ReadJsonFrameOffsets(json_t& jFrameOffsets)
