@@ -11,7 +11,7 @@
 
 #include "../core/JsonFwd.hpp"
 #include "../drawing/ImageId.hpp"
-#include "Object.h"
+#include "ObjectAsset.h"
 #include "ResourceTable.h"
 
 struct IReadObjectContext;
@@ -40,6 +40,8 @@ private:
     std::vector<std::unique_ptr<ImageSource>> _imageSources;
 
 public:
+    ~ImageTable2();
+
     std::vector<Entry>& GetEntries();
 
     /**

@@ -50,24 +50,24 @@ void SceneryGroupObject::ReadLegacy(IReadObjectContext* context, IStream* stream
 
     GetStringTable().Read(context, stream, ObjectStringID::NAME);
     _items = ReadItems(stream);
-    GetImageTable().Read(context, stream);
+    ReadEmbeddedImages(*context, *stream);
 }
 
 void SceneryGroupObject::Load()
 {
     GetStringTable().Sort();
     _legacyType.name = language_allocate_object_string(GetName());
-    _legacyType.image = AllocateImages(GetImageTable().GetCount());
+    _legacyType.image = LoadImages();
     _legacyType.SceneryEntries.clear();
 }
 
 void SceneryGroupObject::Unload()
 {
     language_free_object_string(_legacyType.name);
-    gfx_object_free_images(_legacyType.image, GetImageTable().GetCount());
+    UnloadImages();
 
     _legacyType.name = 0;
-    _legacyType.image = 0;
+    _legacyType.image = ImageIndexUndefined;
 }
 
 void SceneryGroupObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t height) const

@@ -57,7 +57,7 @@ void SmallSceneryObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStre
         _legacyType.flags |= SMALL_SCENERY_FLAG_IS_TREE;
     }
 
-    GetImageTable().Read(context, stream);
+    ReadEmbeddedImages(*context, *stream);
 
     // Validate properties
     if (_legacyType.price <= 0)
@@ -77,18 +77,9 @@ void SmallSceneryObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStre
 
 void SmallSceneryObject::Load()
 {
-    auto context = GetContext();
-    auto assetManager = context->GetAssetPackManager();
-    if (assetManager != nullptr)
-    {
-        assetManager->LoadImagesForObject(GetIdentifier(), _imageTable2);
-    }
-    _imageTable2.Load();
-
     GetStringTable().Sort();
     _legacyType.name = language_allocate_object_string(GetName());
-    // _legacyType.image = AllocateImages(GetImageTable().GetCount());
-    _legacyType.image = _imageTable2.LoadImages();
+    _legacyType.image = LoadImages();
 
     _legacyType.scenery_tab_id = OBJECT_ENTRY_INDEX_NULL;
 
@@ -102,13 +93,11 @@ void SmallSceneryObject::Load()
 
 void SmallSceneryObject::Unload()
 {
-    _imageTable2.Unload();
-
     language_free_object_string(_legacyType.name);
-    gfx_object_free_images(_legacyType.image, GetImageTable().GetCount());
+    UnloadImages();
 
     _legacyType.name = 0;
-    _legacyType.image = 0;
+    _legacyType.image = ImageIndexUndefined;
 }
 
 void SmallSceneryObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t height) const
@@ -319,7 +308,6 @@ void SmallSceneryObject::ReadJson(IReadObjectContext* context, json_t& root)
     }
 
     PopulateTablesFromJson(context, root);
-    _imageTable2.ReadFromJson(*context, root);
 }
 
 std::vector<uint8_t> SmallSceneryObject::ReadJsonFrameOffsets(json_t& jFrameOffsets)

@@ -12,8 +12,10 @@
 #include "../common.h"
 #include "../core/JsonFwd.hpp"
 #include "../core/String.hpp"
+#include "../drawing/Gx.h"
 #include "../util/Util.h"
-#include "ImageTable.h"
+#include "ImageTable2.h"
+#include "ObjectAsset.h"
 #include "StringTable.h"
 
 #include <array>
@@ -235,31 +237,6 @@ enum class ObjectError : uint32_t
     UnexpectedEOF,
 };
 
-class ObjectAsset
-{
-private:
-    std::string _zipPath;
-    std::string _path;
-
-public:
-    ObjectAsset() = default;
-    ObjectAsset(std::string_view path)
-        : _path(path)
-    {
-    }
-    ObjectAsset(std::string_view zipPath, std::string_view path)
-        : _zipPath(zipPath)
-        , _path(path)
-    {
-    }
-
-    [[nodiscard]] bool IsAvailable() const;
-    [[nodiscard]] uint64_t GetSize() const;
-    [[nodiscard]] std::vector<uint8_t> GetData() const;
-    [[nodiscard]] std::unique_ptr<OpenRCT2::IStream> GetStream() const;
-    const std::string& GetPath() const;
-};
-
 struct IReadObjectContext
 {
     virtual ~IReadObjectContext() = default;
@@ -286,11 +263,11 @@ private:
     std::string _identifier;
     ObjectEntryDescriptor _descriptor{};
     StringTable _stringTable;
-    ImageTable _imageTable;
+    ImageTable2 _imageTable;
+    OpenRCT2::Gx _embeddedImages;
     std::vector<ObjectSourceGame> _sourceGames;
     std::vector<std::string> _authors;
     ObjectGeneration _generation{};
-    bool _usesFallbackImages{};
 
 protected:
     StringTable& GetStringTable()
@@ -301,10 +278,12 @@ protected:
     {
         return _stringTable;
     }
-    ImageTable& GetImageTable()
+    ImageTable2& GetImageTable()
     {
         return _imageTable;
     }
+
+    void ReadEmbeddedImages(IReadObjectContext& context, OpenRCT2::IStream& stream);
 
     /**
      * Populates the image and string tables from a JSON object
@@ -320,7 +299,8 @@ protected:
     std::string GetString(ObjectStringID index) const;
     std::string GetString(int32_t language, ObjectStringID index) const;
 
-    ImageIndex AllocateImages(uint32_t count);
+    ImageIndex LoadImages();
+    void UnloadImages();
 
 public:
     virtual ~Object() = default;
@@ -356,11 +336,6 @@ public:
     void SetDescriptor(const ObjectEntryDescriptor& value)
     {
         _descriptor = value;
-    }
-
-    constexpr bool UsesFallbackImages() const
-    {
-        return _usesFallbackImages;
     }
 
     // Legacy data structures
@@ -402,7 +377,7 @@ public:
     const std::vector<std::string>& GetAuthors() const;
     void SetAuthors(std::vector<std::string>&& authors);
 
-    const ImageTable& GetImageTable() const
+    const ImageTable2& GetImageTable() const
     {
         return _imageTable;
     }
@@ -414,6 +389,11 @@ public:
     uint32_t GetNumImages() const
     {
         return GetImageTable().GetCount();
+    }
+
+    const OpenRCT2::Gx& GetEmbeddedImages() const
+    {
+        return _embeddedImages;
     }
 };
 #ifdef __WARN_SUGGEST_FINAL_TYPES__

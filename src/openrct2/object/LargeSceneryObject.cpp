@@ -51,7 +51,7 @@ void LargeSceneryObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStre
 
     _tiles = ReadTiles(stream);
 
-    GetImageTable().Read(context, stream);
+    ReadEmbeddedImages(*context, *stream);
 
     // Validate properties
     if (_legacyType.price <= 0)
@@ -82,7 +82,7 @@ void LargeSceneryObject::Load()
 {
     GetStringTable().Sort();
     _legacyType.name = language_allocate_object_string(GetName());
-    _baseImageId = AllocateImages(GetImageTable().GetCount());
+    _baseImageId = LoadImages();
     _legacyType.image = _baseImageId;
 
     _legacyType.tiles = _tiles.data();
@@ -105,10 +105,10 @@ void LargeSceneryObject::Load()
 void LargeSceneryObject::Unload()
 {
     language_free_object_string(_legacyType.name);
-    gfx_object_free_images(_baseImageId, GetImageTable().GetCount());
+    UnloadImages();
 
     _legacyType.name = 0;
-    _baseImageId = _legacyType.image = 0;
+    _baseImageId = _legacyType.image = ImageIndexUndefined;
 }
 
 void LargeSceneryObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t height) const

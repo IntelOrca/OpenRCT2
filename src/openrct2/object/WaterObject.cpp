@@ -25,20 +25,34 @@
 #include <cstring>
 #include <memory>
 
+WaterObject::~WaterObject()
+{
+    for (auto& palette : _palettes)
+    {
+        delete[] palette.offset;
+    }
+}
+
 void WaterObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStream* stream)
 {
     stream->Seek(14, OpenRCT2::STREAM_SEEK_CURRENT);
     _legacyType.flags = stream->ReadValue<uint16_t>();
 
     GetStringTable().Read(context, stream, ObjectStringID::NAME);
-    GetImageTable().Read(context, stream);
+    ReadEmbeddedImages(*context, *stream);
+
+    auto embeddedImages = GetEmbeddedImages();
+    for (size_t i = 0; i < embeddedImages.GetCount(); i++)
+    {
+        _palettes.push_back(embeddedImages.GetImageCopy(i));
+    }
 }
 
 void WaterObject::Load()
 {
     GetStringTable().Sort();
     _legacyType.string_idx = language_allocate_object_string(GetName());
-    _legacyType.image_id = AllocateImages(GetImageTable().GetCount());
+    _legacyType.image_id = gfx_object_allocate_images(_palettes.data(), _palettes.size());
     _legacyType.palette_index_1 = _legacyType.image_id + 1;
     _legacyType.palette_index_2 = _legacyType.image_id + 4;
 
@@ -47,11 +61,11 @@ void WaterObject::Load()
 
 void WaterObject::Unload()
 {
-    gfx_object_free_images(_legacyType.image_id, GetImageTable().GetCount());
+    gfx_object_free_images(_legacyType.image_id, _palettes.size());
     language_free_object_string(_legacyType.string_idx);
 
     _legacyType.string_idx = 0;
-    _legacyType.image_id = 0;
+    _legacyType.image_id = ImageIndexUndefined;
 }
 
 void WaterObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t height) const
@@ -104,7 +118,7 @@ void WaterObject::ReadJsonPalette(json_t& jPalette)
     auto numColours = jColours.size();
 
     // This pointer gets memcopied in ImageTable::AddImage so it's fine for the unique_ptr to go out of scope
-    auto data = std::make_unique<uint8_t[]>(numColours * 3);
+    auto data = new uint8_t[numColours * 3];
     size_t dataIndex = 0;
 
     for (auto& jColour : jColours)
@@ -119,14 +133,11 @@ void WaterObject::ReadJsonPalette(json_t& jPalette)
         dataIndex += 3;
     }
 
-    rct_g1_element g1 = {};
-    g1.offset = data.get();
+    auto& g1 = _palettes.emplace_back();
+    g1.offset = data;
     g1.width = static_cast<int16_t>(numColours);
     g1.x_offset = Json::GetNumber<int16_t>(jPalette["index"]);
     g1.flags = G1_FLAG_PALETTE;
-
-    auto& imageTable = GetImageTable();
-    imageTable.AddImage(&g1);
 }
 
 uint32_t WaterObject::ParseColour(const std::string& s) const

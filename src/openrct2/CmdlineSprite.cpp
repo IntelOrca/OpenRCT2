@@ -442,15 +442,15 @@ int32_t cmdline_for_sprite(const char** argv, int32_t argc)
             oss << std::setw(numbers) << std::setfill('0') << spriteIndex << ".png";
             auto path = Path::Combine(outputPath, PopStr(oss));
 
-            const auto& g1 = metaObject->GetImageTable().GetImages()[spriteIndex];
-            if (!SpriteImageExport(g1, path))
+            const auto& g1 = metaObject->GetEmbeddedImages().GetImage(spriteIndex);
+            if (g1 == nullptr || !SpriteImageExport(*g1, path))
             {
                 fprintf(stderr, "Could not export\n");
                 return -1;
             }
 
             path = fs::u8path(path).generic_u8string();
-            fprintf(stdout, "{ \"path\": \"%s\", \"x\": %d, \"y\": %d },\n", path.c_str(), g1.x_offset, g1.y_offset);
+            fprintf(stdout, "{ \"path\": \"%s\", \"x\": %d, \"y\": %d },\n", path.c_str(), g1->x_offset, g1->y_offset);
         }
         return 1;
     }

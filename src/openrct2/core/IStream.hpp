@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../common.h"
-#include "../object/Object.h"
 #include "Memory.hpp"
 
 #include <istream>
@@ -205,9 +204,9 @@ namespace OpenRCT2
             Write(buffer, sizeof(T) * count);
         }
 
-        utf8* ReadString();
+        char* ReadString();
         std::string ReadStdString();
-        void WriteString(const utf8* str);
+        void WriteString(const char* str);
         void WriteString(const std::string_view string);
         void WriteString(const std::string& string);
     };

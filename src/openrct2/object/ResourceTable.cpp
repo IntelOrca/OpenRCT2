@@ -76,6 +76,13 @@ ResourceTable::SourceInfo ResourceTable::ParseSource(std::string_view source)
         info.Kind = SourceKind::Gx;
         info.Path = fileName;
     }
+    else if (String::StartsWith(base, "$G1"))
+    {
+        auto env = GetContext()->GetPlatformEnvironment();
+        auto dataPath = env->GetDirectoryPath(DIRBASE::RCT2, DIRID::DATA);
+        info.Kind = SourceKind::Gx;
+        info.Path = Path::ResolveCasing(Path::Combine(dataPath, "g1.dat"));
+    }
     else if (String::StartsWith(base, "$RCT1:DATA/"))
     {
         auto env = GetContext()->GetPlatformEnvironment();

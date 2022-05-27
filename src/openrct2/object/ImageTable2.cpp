@@ -14,23 +14,33 @@
 #include "../audio/AudioContext.h"
 #include "../core/Json.hpp"
 #include "../core/Path.hpp"
+#include "../drawing/Drawing.h"
 #include "../drawing/Image.h"
+#include "Object.h"
 #include "ObjectFactory.h"
 
 using namespace OpenRCT2;
 
+ImageTable2::~ImageTable2()
+{
+    Unload();
+}
+
 void ImageTable2::ReadFromJson(IReadObjectContext& context, const json_t& root)
 {
-    json_t jImages = root["images"];
-    if (jImages.is_string())
+    if (root.contains("images"))
     {
-        ReadEntryFromJson(context, jImages);
-    }
-    else if (jImages.is_array())
-    {
-        for (auto& jImage : jImages)
+        json_t jImages = root["images"];
+        if (jImages.is_string())
         {
-            ReadEntryFromJson(context, jImage);
+            ReadEntryFromJson(context, jImages);
+        }
+        else if (jImages.is_array())
+        {
+            for (auto& jImage : jImages)
+            {
+                ReadEntryFromJson(context, jImage);
+            }
         }
     }
 }
@@ -129,6 +139,8 @@ void ImageTable2::Unload()
             el->offset = nullptr;
         }
         gfx_object_free_images(_baseIndex, _loadedImageCount);
+        _baseIndex = ImageIndexUndefined;
+        _loadedImageCount = 0;
     }
 }
 
@@ -159,37 +171,24 @@ void ImageTable2::LoadImage(rct_g1_element& element, uint32_t sourceIndex)
     }
 }
 
-static rct_g1_element DuplicateImageData(const rct_g1_element& src)
-{
-    rct_g1_element dst = src;
-    auto size = g1_calculate_data_size(&src);
-    dst.offset = new uint8_t[size];
-    std::memcpy(dst.offset, src.offset, size);
-    return dst;
-}
-
 class GxImageSource : public ImageSource
 {
 private:
-    std::optional<rct_gx> _gx;
-    size_t _numEntries{};
-    size_t _dataSize{};
+    Gx _gx;
 
 public:
     GxImageSource(ObjectAsset& asset)
     {
-        auto data = asset.GetData();
-        _gx = GfxLoadGx(data);
+        auto stream = asset.GetStream();
+        if (stream != nullptr)
+        {
+            _gx = Gx::FromStream(*stream);
+        }
     }
 
     void LoadImage(rct_g1_element& element, uint32_t index) override
     {
-        if (_gx && index < _gx->elements.size())
-        {
-            auto src = _gx->elements[index];
-            src.offset = src.offset + reinterpret_cast<size_t>(_gx->data.get());
-            element = DuplicateImageData(src);
-        }
+        element = _gx.GetImageCopy(index);
     }
 };
 
@@ -208,13 +207,8 @@ public:
     void LoadImage(rct_g1_element& element, uint32_t index) override
     {
         const auto& obj = *_object.get();
-        auto& imgTable = obj.GetImageTable();
-        auto numImages = imgTable.GetCount();
-        if (index < numImages)
-        {
-            auto images = imgTable.GetImages();
-            element = DuplicateImageData(images[index]);
-        }
+        auto& gx = obj.GetEmbeddedImages();
+        element = gx.GetImageCopy(index);
     }
 };
 

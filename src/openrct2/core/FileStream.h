@@ -39,7 +39,7 @@ namespace OpenRCT2
         FileStream(const fs::path& path, int32_t fileMode);
         FileStream(const std::string& path, int32_t fileMode);
         FileStream(std::string_view path, int32_t fileMode);
-        FileStream(const utf8* path, int32_t fileMode);
+        FileStream(const char* path, int32_t fileMode);
         ~FileStream() override;
 
         bool CanRead() const override;

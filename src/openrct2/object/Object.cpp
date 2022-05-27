@@ -115,10 +115,15 @@ void Object::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStream* stream)
     throw std::runtime_error("Not supported.");
 }
 
+void Object::ReadEmbeddedImages(IReadObjectContext& context, IStream& stream)
+{
+    _embeddedImages = _embeddedImages.FromStream(stream);
+}
+
 void Object::PopulateTablesFromJson(IReadObjectContext* context, json_t& root)
 {
     _stringTable.ReadJson(root);
-    _usesFallbackImages = _imageTable.ReadJson(context, root);
+    _imageTable.ReadFromJson(*context, root);
 }
 
 rct_object_entry Object::ParseObjectEntry(const std::string& s)
@@ -188,19 +193,21 @@ void Object::SetSourceGames(const std::vector<ObjectSourceGame>& sourceGames)
     _sourceGames = sourceGames;
 }
 
-uint32_t Object::AllocateImages(uint32_t count)
+ImageIndex Object::LoadImages()
 {
-    // auto context = GetContext();
-    // auto assetManager = context->GetAssetPackManager();
-    // if (assetManager != nullptr)
-    // {
-    //     auto imageIndex = assetManager->AllocateImagesForObject(_identifier, count);
-    //     if (imageIndex != ImageIndexUndefined)
-    //     {
-    //         return imageIndex;
-    //     }
-    // }
-    return gfx_object_allocate_images(GetImageTable().GetImages(), GetImageTable().GetCount());
+    auto context = GetContext();
+    auto assetManager = context->GetAssetPackManager();
+    if (assetManager != nullptr)
+    {
+        assetManager->LoadImagesForObject(GetIdentifier(), _imageTable);
+    }
+    _imageTable.Load();
+    return _imageTable.LoadImages();
+}
+
+void Object::UnloadImages()
+{
+    _imageTable.Unload();
 }
 
 #ifdef __WARN_SUGGEST_FINAL_METHODS__

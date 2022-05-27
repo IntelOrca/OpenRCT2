@@ -7,25 +7,27 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
-#include "ImageTable.h"
+#ifdef OLD_IMAGE_TABLE
 
-#include "../Context.h"
-#include "../OpenRCT2.h"
-#include "../PlatformEnvironment.h"
-#include "../core/File.h"
-#include "../core/FileScanner.h"
-#include "../core/IStream.hpp"
-#include "../core/Json.hpp"
-#include "../core/Path.hpp"
-#include "../core/String.hpp"
-#include "../drawing/ImageImporter.h"
-#include "../sprites.h"
-#include "Object.h"
-#include "ObjectFactory.h"
+#    include "ImageTable.h"
 
-#include <algorithm>
-#include <memory>
-#include <stdexcept>
+#    include "../Context.h"
+#    include "../OpenRCT2.h"
+#    include "../PlatformEnvironment.h"
+#    include "../core/File.h"
+#    include "../core/FileScanner.h"
+#    include "../core/IStream.hpp"
+#    include "../core/Json.hpp"
+#    include "../core/Path.hpp"
+#    include "../core/String.hpp"
+#    include "../drawing/ImageImporter.h"
+#    include "../sprites.h"
+#    include "Object.h"
+#    include "ObjectFactory.h"
+
+#    include <algorithm>
+#    include <memory>
+#    include <stdexcept>
 
 using namespace OpenRCT2;
 using namespace OpenRCT2::Drawing;
@@ -606,3 +608,5 @@ void ImageTable::AddImage(const rct_g1_element* g1)
     }
     _entries.push_back(std::move(newg1));
 }
+
+#endif

@@ -20,7 +20,6 @@ class SmallSceneryObject final : public SceneryObject
 private:
     SmallSceneryEntry _legacyType = {};
     std::vector<uint8_t> _frameOffsets;
-    ImageTable2 _imageTable2;
 
 public:
     void* GetLegacyData() override

@@ -15,6 +15,7 @@
 #include "../core/File.h"
 #include "../core/Json.hpp"
 #include "../core/Path.hpp"
+#include "Object.h"
 
 using namespace OpenRCT2;
 using namespace OpenRCT2::Audio;
