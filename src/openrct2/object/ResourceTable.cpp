@@ -80,8 +80,15 @@ ResourceTable::SourceInfo ResourceTable::ParseSource(std::string_view source)
     {
         auto env = GetContext()->GetPlatformEnvironment();
         auto dataPath = env->GetDirectoryPath(DIRBASE::RCT2, DIRID::DATA);
-        info.Kind = SourceKind::Gx;
-        info.Path = Path::ResolveCasing(Path::Combine(dataPath, "g1.dat"));
+        info.Kind = SourceKind::G1;
+        // info.Path = env->FindFile(DIRBASE::RCT2, DIRID::DATA, "g1.dat");
+    }
+    else if (String::StartsWith(base, "$CSG"))
+    {
+        auto env = GetContext()->GetPlatformEnvironment();
+        auto dataPath = env->GetDirectoryPath(DIRBASE::RCT2, DIRID::DATA);
+        info.Kind = SourceKind::Csg;
+        // info.Path = env->FindFile(DIRBASE::RCT2, DIRID::DATA, "g1.dat");
     }
     else if (String::StartsWith(base, "$RCT1:DATA/"))
     {

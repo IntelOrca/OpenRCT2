@@ -20,10 +20,12 @@ class ResourceTable
 protected:
     enum class SourceKind
     {
-        Other,
+        None,
         Data,
         ObjData,
-        Gx
+        Gx,
+        G1,
+        Csg,
     };
 
     struct SourceInfo

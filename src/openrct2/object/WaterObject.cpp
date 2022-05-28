@@ -41,7 +41,7 @@ void WaterObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStream* str
     GetStringTable().Read(context, stream, ObjectStringID::NAME);
     ReadEmbeddedImages(*context, *stream);
 
-    auto embeddedImages = GetEmbeddedImages();
+    auto& embeddedImages = GetEmbeddedImages();
     for (size_t i = 0; i < embeddedImages.GetCount(); i++)
     {
         _palettes.push_back(embeddedImages.GetImageCopy(i));

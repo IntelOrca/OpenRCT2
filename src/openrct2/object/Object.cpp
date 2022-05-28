@@ -117,7 +117,7 @@ void Object::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStream* stream)
 
 void Object::ReadEmbeddedImages(IReadObjectContext& context, IStream& stream)
 {
-    _embeddedImages = _embeddedImages.FromStream(stream);
+    _embeddedImages = GxFile(stream);
 }
 
 void Object::PopulateTablesFromJson(IReadObjectContext* context, json_t& root)

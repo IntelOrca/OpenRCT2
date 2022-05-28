@@ -12,6 +12,7 @@
 #include "../Context.h"
 #include "../PlatformEnvironment.h"
 #include "../audio/AudioContext.h"
+#include "../core/FileStream.h"
 #include "../core/Json.hpp"
 #include "../core/Path.hpp"
 #include "../drawing/Drawing.h"
@@ -95,15 +96,9 @@ void ImageTable2::LoadFrom(const ImageTable2& table, size_t index, size_t source
     }
 
     const auto& sourceEntry = table._entries[sourceIndex];
-    if (sourceEntry.Asset)
+    if (sourceEntry.Kind != SourceKind::None)
     {
-        auto stream = sourceEntry.Asset->GetStream();
-        if (stream != nullptr)
-        {
-            entry.Kind = sourceEntry.Kind;
-            entry.Asset = sourceEntry.Asset;
-            entry.PathIndex = sourceEntry.PathIndex;
-        }
+        entry = sourceEntry;
     }
 }
 
@@ -161,21 +156,18 @@ ImageIndex ImageTable2::GetImage(uint32_t index) const
 void ImageTable2::LoadImage(std::vector<rct_g1_element>& elements, size_t index)
 {
     auto& entry = _entries.at(index);
-    if (entry.Asset)
+    auto source = GetOrLoadSource(entry);
+    if (source != nullptr && entry.PathIndex)
     {
-        auto source = GetOrLoadSource(entry);
-        if (source != nullptr && entry.PathIndex)
+        auto* element = &elements[index];
+        auto nextZoomIndex = source->LoadImage(*element, *entry.PathIndex);
+        while (nextZoomIndex)
         {
-            auto* element = &elements[index];
-            auto nextZoomIndex = source->LoadImage(*element, *entry.PathIndex);
-            while (nextZoomIndex)
-            {
-                element->zoomed_offset = -static_cast<int32_t>(elements.size() - index);
-                auto& zoomElement = elements.emplace_back();
-                nextZoomIndex = source->LoadImage(zoomElement, *nextZoomIndex);
-                element = &zoomElement;
-                index = elements.size() - 1;
-            }
+            element->zoomed_offset = -static_cast<int32_t>(elements.size() - index);
+            auto& zoomElement = elements.emplace_back();
+            nextZoomIndex = source->LoadImage(zoomElement, *nextZoomIndex);
+            element = &zoomElement;
+            index = elements.size() - 1;
         }
     }
 }
@@ -183,16 +175,17 @@ void ImageTable2::LoadImage(std::vector<rct_g1_element>& elements, size_t index)
 class GxImageSource : public ImageSource
 {
 private:
-    Gx _gx;
+    GxStream _gx;
 
 public:
-    GxImageSource(ObjectAsset& asset)
+    GxImageSource(std::unique_ptr<IStream> stream)
+        : _gx(std::move(stream))
     {
-        auto stream = asset.GetStream();
-        if (stream != nullptr)
-        {
-            _gx = Gx::FromStream(*stream);
-        }
+    }
+
+    GxImageSource(std::unique_ptr<IStream> streamElements, std::unique_ptr<IStream> streamData)
+        : _gx(std::move(streamElements), std::move(streamData))
+    {
     }
 
     std::optional<size_t> LoadImage(rct_g1_element& element, size_t index) override
@@ -230,9 +223,35 @@ ImageSource* ImageTable2::GetOrLoadSource(Entry& entry)
         std::unique_ptr<ImageSource> source;
         switch (entry.Kind)
         {
-            case SourceKind::Gx:
-                source = std::make_unique<GxImageSource>(*entry.Asset);
+            case SourceKind::G1:
+            {
+                auto env = GetContext()->GetPlatformEnvironment();
+                auto dataPath = env->FindFile(DIRBASE::RCT2, DIRID::DATA, "g1.dat");
+                source = std::make_unique<GxImageSource>(std::make_unique<FileStream>(dataPath, FILE_MODE_OPEN));
                 break;
+            }
+            case SourceKind::Csg:
+            {
+                auto env = GetContext()->GetPlatformEnvironment();
+                auto dataPathElements = env->FindFile(DIRBASE::RCT1, DIRID::DATA, "csg1i.dat");
+                auto dataPathData = env->FindFile(DIRBASE::RCT1, DIRID::DATA, "csg1.dat");
+                source = std::make_unique<GxImageSource>(
+                    std::make_unique<FileStream>(dataPathElements, FILE_MODE_OPEN),
+                    std::make_unique<FileStream>(dataPathData, FILE_MODE_OPEN));
+                break;
+            }
+            case SourceKind::Gx:
+            {
+                if (entry.Asset)
+                {
+                    auto stream = entry.Asset->GetStream();
+                    if (stream != nullptr)
+                    {
+                        source = std::make_unique<GxImageSource>(std::move(stream));
+                    }
+                }
+                break;
+            }
             case SourceKind::ObjData:
                 source = std::make_unique<ObjectImageSource>(*entry.Asset);
                 break;
