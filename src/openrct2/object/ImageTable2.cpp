@@ -116,9 +116,9 @@ ImageIndex ImageTable2::LoadImages()
 {
     std::vector<rct_g1_element> images;
     images.resize(_entries.size());
-    for (size_t i = 0; i < images.size(); i++)
+    for (size_t i = 0; i < _entries.size(); i++)
     {
-        LoadImage(images[i], i);
+        LoadImage(images, i);
     }
     _baseIndex = gfx_object_allocate_images(images.data(), images.size());
     if (_baseIndex != ImageIndexUndefined)
@@ -158,15 +158,24 @@ ImageIndex ImageTable2::GetImage(uint32_t index) const
     return ImageIndexUndefined;
 }
 
-void ImageTable2::LoadImage(rct_g1_element& element, uint32_t sourceIndex)
+void ImageTable2::LoadImage(std::vector<rct_g1_element>& elements, size_t index)
 {
-    auto& entry = _entries.at(sourceIndex);
+    auto& entry = _entries.at(index);
     if (entry.Asset)
     {
         auto source = GetOrLoadSource(entry);
         if (source != nullptr && entry.PathIndex)
         {
-            source->LoadImage(element, *entry.PathIndex);
+            auto* element = &elements[index];
+            auto nextZoomIndex = source->LoadImage(*element, *entry.PathIndex);
+            while (nextZoomIndex)
+            {
+                element->zoomed_offset = -static_cast<int32_t>(elements.size() - index);
+                auto& zoomElement = elements.emplace_back();
+                nextZoomIndex = source->LoadImage(zoomElement, *nextZoomIndex);
+                element = &zoomElement;
+                index = elements.size() - 1;
+            }
         }
     }
 }
@@ -186,9 +195,10 @@ public:
         }
     }
 
-    void LoadImage(rct_g1_element& element, uint32_t index) override
+    std::optional<size_t> LoadImage(rct_g1_element& element, size_t index) override
     {
         element = _gx.GetImageCopy(index);
+        return _gx.GetNextZoomImage(index);
     }
 };
 
@@ -204,11 +214,12 @@ public:
         _object = ObjectFactory::CreateObjectFromLegacyFile(objRepository, asset.GetPath().c_str(), true);
     }
 
-    void LoadImage(rct_g1_element& element, uint32_t index) override
+    std::optional<size_t> LoadImage(rct_g1_element& element, size_t index) override
     {
         const auto& obj = *_object.get();
         auto& gx = obj.GetEmbeddedImages();
         element = gx.GetImageCopy(index);
+        return {};
     }
 };
 

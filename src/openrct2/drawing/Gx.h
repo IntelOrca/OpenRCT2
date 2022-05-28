@@ -12,6 +12,8 @@
 #include "../core/IStream.hpp"
 #include "../drawing/Drawing.h"
 
+#include <optional>
+
 namespace OpenRCT2
 {
     class Gx
@@ -26,5 +28,6 @@ namespace OpenRCT2
         size_t GetCount() const;
         const rct_g1_element* GetImage(size_t i) const;
         rct_g1_element GetImageCopy(size_t i) const;
+        std::optional<size_t> GetNextZoomImage(size_t i) const;
     };
 } // namespace OpenRCT2

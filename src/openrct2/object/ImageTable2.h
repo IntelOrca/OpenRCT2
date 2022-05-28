@@ -14,6 +14,8 @@
 #include "ObjectAsset.h"
 #include "ResourceTable.h"
 
+#include <optional>
+
 struct IReadObjectContext;
 struct rct_g1_element;
 
@@ -21,7 +23,7 @@ class ImageSource
 {
 public:
     virtual ~ImageSource() = default;
-    virtual void LoadImage(rct_g1_element& element, uint32_t index) = 0;
+    virtual std::optional<size_t> LoadImage(rct_g1_element& element, size_t index) = 0;
 };
 
 class ImageTable2 : public ResourceTable
@@ -76,7 +78,7 @@ public:
 
     size_t GetCount() const;
     ImageIndex GetImage(uint32_t index) const;
-    void LoadImage(rct_g1_element& element, uint32_t sourceIndex);
+    void LoadImage(std::vector<rct_g1_element>& elements, size_t index);
 
 private:
     void ReadEntryFromJson(IReadObjectContext& context, const json_t& jImage);

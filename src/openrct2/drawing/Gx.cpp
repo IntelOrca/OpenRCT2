@@ -82,3 +82,13 @@ rct_g1_element Gx::GetImageCopy(size_t i) const
     }
     return result;
 }
+
+std::optional<size_t> Gx::GetNextZoomImage(size_t i) const
+{
+    auto& element = _elements[i];
+    if (element.flags & G1_FLAG_HAS_ZOOM_SPRITE)
+    {
+        return i - element.zoomed_offset;
+    }
+    return {};
+}
