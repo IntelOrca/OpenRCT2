@@ -279,7 +279,7 @@ void RideObject::Unload()
     language_free_object_string(_legacyType.naming.Name);
     language_free_object_string(_legacyType.naming.Description);
     language_free_object_string(_legacyType.capacity);
-    GetImageTable().Unload();
+    UnloadImages();
 
     _legacyType.naming.Name = 0;
     _legacyType.naming.Description = 0;

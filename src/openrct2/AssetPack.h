@@ -12,7 +12,6 @@
 #include "core/FileSystem.hpp"
 #include "core/JsonFwd.hpp"
 #include "object/AudioSampleTable.h"
-#include "object/ImageTable2.h"
 
 #include <string>
 #include <string_view>
@@ -20,6 +19,8 @@
 
 namespace OpenRCT2
 {
+    class ImageTable2;
+
     class AssetPack
     {
     private:
@@ -30,7 +31,7 @@ namespace OpenRCT2
             size_t TableLength{};
         };
 
-        ImageTable2 _imageTable;
+        std::unique_ptr<ImageTable2> _imageTable;
         AudioSampleTable _sampleTable;
         std::vector<Entry> _entries;
 

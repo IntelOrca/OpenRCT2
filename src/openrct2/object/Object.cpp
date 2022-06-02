@@ -21,6 +21,7 @@
 #include "../localisation/LocalisationService.h"
 #include "../localisation/StringIds.h"
 #include "../world/Scenery.h"
+#include "ImageTable2.h"
 #include "ObjectLimits.h"
 #include "ObjectRepository.h"
 
@@ -105,6 +106,15 @@ bool ObjectEntryDescriptor::operator!=(const ObjectEntryDescriptor& rhs) const
     return !(*this == rhs);
 }
 
+Object::Object()
+{
+    _imageTable = std::make_unique<ImageTable2>();
+}
+
+Object::~Object()
+{
+}
+
 void* Object::GetLegacyData()
 {
     throw std::runtime_error("Not supported.");
@@ -115,6 +125,23 @@ void Object::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStream* stream)
     throw std::runtime_error("Not supported.");
 }
 
+ImageTable2* Object::GetImageTable()
+{
+    return _imageTable.get();
+}
+
+const ImageTable2* Object::GetImageTable() const
+{
+    return _imageTable.get();
+}
+
+uint32_t Object::GetNumImages() const
+{
+    if (_imageTable == nullptr)
+        return 0;
+    return _imageTable->GetCount();
+}
+
 void Object::ReadEmbeddedImages(IReadObjectContext& context, IStream& stream)
 {
     _embeddedImages = GxFile(stream);
@@ -123,7 +150,7 @@ void Object::ReadEmbeddedImages(IReadObjectContext& context, IStream& stream)
 void Object::PopulateTablesFromJson(IReadObjectContext* context, json_t& root)
 {
     _stringTable.ReadJson(root);
-    _imageTable.ReadFromJson(*context, root);
+    _imageTable->ReadFromJson(*context, root);
 }
 
 rct_object_entry Object::ParseObjectEntry(const std::string& s)
@@ -199,15 +226,15 @@ ImageIndex Object::LoadImages()
     auto assetManager = context->GetAssetPackManager();
     if (assetManager != nullptr)
     {
-        assetManager->LoadImagesForObject(GetIdentifier(), _imageTable);
+        assetManager->LoadImagesForObject(GetIdentifier(), *_imageTable);
     }
-    _imageTable.Load();
-    return _imageTable.LoadImages();
+    _imageTable->Load();
+    return _imageTable->LoadImages();
 }
 
 void Object::UnloadImages()
 {
-    _imageTable.Unload();
+    _imageTable->Unload();
 }
 
 #ifdef __WARN_SUGGEST_FINAL_METHODS__

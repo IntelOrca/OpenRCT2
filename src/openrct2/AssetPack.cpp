@@ -15,6 +15,7 @@
 #include "core/Zip.h"
 #include "drawing/Image.h"
 #include "localisation/LocalisationService.h"
+#include "object/ImageTable2.h"
 #include "object/Object.h"
 
 #include <algorithm>
@@ -26,6 +27,7 @@ constexpr std::string_view ManifestFileName = "manifest.json";
 AssetPack::AssetPack(const fs::path& path)
     : Path(path)
 {
+    _imageTable = std::make_unique<ImageTable2>();
 }
 
 AssetPack::~AssetPack()
@@ -88,7 +90,7 @@ void AssetPack::LoadImagesForObject(std::string_view id, ImageTable2& objectTabl
     auto it = std::find_if(_entries.begin(), _entries.end(), [id](const Entry& entry) { return entry.ObjectId == id; });
     if (it != _entries.end())
     {
-        objectTable.LoadFrom(_imageTable, it->TableIndex, it->TableLength);
+        objectTable.LoadFrom(*_imageTable, it->TableIndex, it->TableLength);
     }
 }
 
@@ -179,9 +181,9 @@ void AssetPack::Load()
 
         if (jObject.contains("images"))
         {
-            entry.TableIndex = _imageTable.GetCount();
-            _imageTable.ReadFromJson(loadContext, jObject);
-            entry.TableLength = _imageTable.GetCount() - entry.TableIndex;
+            entry.TableIndex = _imageTable->GetCount();
+            _imageTable->ReadFromJson(loadContext, jObject);
+            entry.TableLength = _imageTable->GetCount() - entry.TableIndex;
         }
         else if (jObject.contains("samples"))
         {

@@ -19,68 +19,74 @@
 struct IReadObjectContext;
 struct rct_g1_element;
 
-class ImageSource
+namespace OpenRCT2
 {
-public:
-    virtual ~ImageSource() = default;
-    virtual std::optional<size_t> LoadImage(rct_g1_element& element, size_t index) = 0;
-};
-
-class ImageTable2 : public ResourceTable
-{
-private:
-    struct Entry
+    class ImageSource
     {
-        SourceKind Kind{};
-        std::optional<ObjectAsset> Asset;
-        std::optional<uint32_t> PathIndex;
+    public:
+        virtual ~ImageSource() = default;
+        virtual std::optional<size_t> LoadImage(rct_g1_element& element, size_t index) = 0;
     };
 
-    std::vector<Entry> _entries;
-    ImageIndex _baseIndex = ImageIndexUndefined;
-    size_t _loadedImageCount{};
-    std::vector<std::unique_ptr<ImageSource>> _imageSources;
+    class ImageTable2 : public ResourceTable
+    {
+    private:
+        struct Entry
+        {
+            SourceKind Kind{};
+            std::optional<ObjectAsset> Asset;
+            std::optional<uint32_t> PathIndex;
+            int32_t X{};
+            int32_t Y{};
+        };
 
-public:
-    ~ImageTable2();
+        std::vector<Entry> _entries;
+        ImageIndex _baseIndex = ImageIndexUndefined;
+        size_t _loadedImageCount{};
+        std::vector<std::unique_ptr<ImageSource>> _imageSources;
 
-    std::vector<Entry>& GetEntries();
+    public:
+        ~ImageTable2();
 
-    /**
-     * Read the entries from the given JSON into the table, but do not load anything.
-     */
-    void ReadFromJson(IReadObjectContext& context, const json_t& root);
+        std::vector<Entry>& GetEntries();
 
-    /**
-     * Load all available entries from the given table.
-     */
-    void LoadFrom(const ImageTable2& table, size_t sourceIndex, size_t length);
+        /**
+         * Read the entries from the given JSON into the table, but do not load anything.
+         */
+        void ReadFromJson(IReadObjectContext& context, const json_t& root);
 
-    /**
-     * Load a specific entry from the given table.
-     */
-    void LoadFrom(const ImageTable2& table, size_t index, size_t sourceIndex, size_t length);
+        /**
+         * Load all available entries from the given table.
+         */
+        void LoadFrom(const ImageTable2& table, size_t sourceIndex, size_t length);
 
-    /**
-     * Load all available entries.
-     */
-    void Load();
+        /**
+         * Load a specific entry from the given table.
+         */
+        void LoadFrom(const ImageTable2& table, size_t index, size_t sourceIndex, size_t length);
 
-    /**
-     * Unloads all entries that are currently loaded.
-     */
-    void Unload();
+        /**
+         * Load all available entries.
+         */
+        void Load();
 
-    /**
-     * Load all the images.
-     */
-    ImageIndex LoadImages();
+        /**
+         * Unloads all entries that are currently loaded.
+         */
+        void Unload();
 
-    size_t GetCount() const;
-    ImageIndex GetImage(uint32_t index) const;
-    void LoadImage(std::vector<rct_g1_element>& elements, size_t index);
+        /**
+         * Load all the images.
+         */
+        ImageIndex LoadImages();
 
-private:
-    void ReadEntryFromJson(IReadObjectContext& context, const json_t& jImage);
-    ImageSource* GetOrLoadSource(Entry& entry);
-};
+        size_t GetCount() const;
+        ImageIndex GetImage(uint32_t index) const;
+        void LoadImage(std::vector<rct_g1_element>& elements, size_t index);
+
+    private:
+        static void ReadImageInfoFromJson(IReadObjectContext& context, const json_t& jImage, Entry& entry);
+        void ReadEntryFromJson(IReadObjectContext& context, const json_t& jImage);
+        ImageSource* GetOrLoadSource(Entry& entry);
+    };
+} // namespace OpenRCT2

@@ -35,7 +35,7 @@ void TerrainSurfaceObject::Load()
     {
         EntryBaseImageId = IconImageId + 1;
     }
-    NumEntries = (GetImageTable().GetCount() - EntryBaseImageId) / NUM_IMAGES_IN_ENTRY;
+    NumEntries = (GetNumImages() - EntryBaseImageId) / NUM_IMAGES_IN_ENTRY;
 }
 
 void TerrainSurfaceObject::Unload()

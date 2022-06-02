@@ -64,6 +64,10 @@ void ImageTable2::ReadEntryFromJson(IReadObjectContext& context, const json_t& j
         auto& entry = _entries.emplace_back();
         entry.Kind = sourceInfo.Kind;
         entry.Asset = asset;
+        if (jImage.is_object())
+        {
+            ReadImageInfoFromJson(context, jImage, entry);
+        }
     }
     else
     {
@@ -75,6 +79,14 @@ void ImageTable2::ReadEntryFromJson(IReadObjectContext& context, const json_t& j
             entry.PathIndex = index;
         }
     }
+}
+
+void ImageTable2::ReadImageInfoFromJson(IReadObjectContext& context, const json_t& jImage, ImageTable2::Entry& entry)
+{
+    if (jImage.contains("x"))
+        entry.X = jImage.at("x").get<int32_t>();
+    if (jImage.contains("y"))
+        entry.Y = jImage.at("y").get<int32_t>();
 }
 
 void ImageTable2::LoadFrom(const ImageTable2& table, size_t sourceIndex, size_t length)

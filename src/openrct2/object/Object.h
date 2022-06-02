@@ -14,7 +14,6 @@
 #include "../core/String.hpp"
 #include "../drawing/Gx.h"
 #include "../util/Util.h"
-#include "ImageTable2.h"
 #include "ObjectAsset.h"
 #include "StringTable.h"
 
@@ -221,8 +220,9 @@ struct ObjectEntryDescriptor
 struct IObjectRepository;
 namespace OpenRCT2
 {
+    class ImageTable2;
     struct IStream;
-}
+} // namespace OpenRCT2
 struct ObjectRepositoryItem;
 struct rct_drawpixelinfo;
 
@@ -263,7 +263,7 @@ private:
     std::string _identifier;
     ObjectEntryDescriptor _descriptor{};
     StringTable _stringTable;
-    ImageTable2 _imageTable;
+    std::unique_ptr<OpenRCT2::ImageTable2> _imageTable;
     OpenRCT2::GxFile _embeddedImages;
     std::vector<ObjectSourceGame> _sourceGames;
     std::vector<std::string> _authors;
@@ -278,10 +278,7 @@ protected:
     {
         return _stringTable;
     }
-    ImageTable2& GetImageTable()
-    {
-        return _imageTable;
-    }
+    OpenRCT2::ImageTable2* GetImageTable();
 
     void ReadEmbeddedImages(IReadObjectContext& context, OpenRCT2::IStream& stream);
 
@@ -303,7 +300,8 @@ protected:
     void UnloadImages();
 
 public:
-    virtual ~Object() = default;
+    Object();
+    virtual ~Object();
 
     std::string_view GetIdentifier() const
     {
@@ -377,19 +375,13 @@ public:
     const std::vector<std::string>& GetAuthors() const;
     void SetAuthors(std::vector<std::string>&& authors);
 
-    const ImageTable2& GetImageTable() const
-    {
-        return _imageTable;
-    }
+    const OpenRCT2::ImageTable2* GetImageTable() const;
 
     ObjectEntryDescriptor GetScgWallsHeader() const;
     ObjectEntryDescriptor GetScgPathXHeader() const;
     rct_object_entry CreateHeader(const char name[9], uint32_t flags, uint32_t checksum);
 
-    uint32_t GetNumImages() const
-    {
-        return GetImageTable().GetCount();
-    }
+    uint32_t GetNumImages() const;
 
     const OpenRCT2::Gx& GetEmbeddedImages() const
     {

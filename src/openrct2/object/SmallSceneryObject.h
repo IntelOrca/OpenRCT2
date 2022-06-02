@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../world/Scenery.h"
-#include "ImageTable2.h"
 #include "SceneryObject.h"
 
 #include <vector>

@@ -16,11 +16,12 @@
 #include <vector>
 
 class AudioSampleTable;
-class ImageTable2;
 
 namespace OpenRCT2
 {
     class AssetPack;
+    class ImageTable2;
+
     class AssetPackManager
     {
     private:
