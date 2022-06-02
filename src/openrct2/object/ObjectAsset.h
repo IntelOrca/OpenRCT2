@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -40,5 +41,17 @@ public:
     [[nodiscard]] uint64_t GetSize() const;
     [[nodiscard]] std::vector<uint8_t> GetData() const;
     [[nodiscard]] std::unique_ptr<OpenRCT2::IStream> GetStream() const;
+    const std::string& GetZipPath() const;
     const std::string& GetPath() const;
+    size_t GetHash() const;
+
+    friend bool operator==(const ObjectAsset& l, const ObjectAsset& r);
+};
+
+template<> struct std::hash<ObjectAsset>
+{
+    std::size_t operator()(const ObjectAsset& asset) const noexcept
+    {
+        return asset.GetHash();
+    }
 };

@@ -13,14 +13,31 @@
 #include "../PlatformEnvironment.h"
 #include "../audio/AudioContext.h"
 #include "../core/FileStream.h"
+#include "../core/Imaging.h"
 #include "../core/Json.hpp"
 #include "../core/Path.hpp"
 #include "../drawing/Drawing.h"
 #include "../drawing/Image.h"
+#include "../drawing/ImageImporter.h"
 #include "Object.h"
 #include "ObjectFactory.h"
 
 using namespace OpenRCT2;
+using namespace OpenRCT2::Drawing;
+
+namespace OpenRCT2
+{
+    class ImageSource
+    {
+    public:
+        virtual ~ImageSource() = default;
+        virtual std::optional<size_t> LoadImage(const ImageTable2::Entry& entry, rct_g1_element& element, size_t index) = 0;
+    };
+} // namespace OpenRCT2
+
+ImageTable2::ImageTable2()
+{
+}
 
 ImageTable2::~ImageTable2()
 {
@@ -58,7 +75,7 @@ void ImageTable2::ReadEntryFromJson(IReadObjectContext& context, const json_t& j
         sourceInfo = ParseSource(jImage.at("path").get<std::string>());
     }
 
-    auto asset = context.GetAsset(sourceInfo.Path);
+    auto asset = sourceInfo.Path.empty() ? std::nullopt : std::make_optional<ObjectAsset>(context.GetAsset(sourceInfo.Path));
     if (!sourceInfo.SourceRange)
     {
         auto& entry = _entries.emplace_back();
@@ -169,15 +186,15 @@ void ImageTable2::LoadImage(std::vector<rct_g1_element>& elements, size_t index)
 {
     auto& entry = _entries.at(index);
     auto source = GetOrLoadSource(entry);
-    if (source != nullptr && entry.PathIndex)
+    if (source != nullptr)
     {
         auto* element = &elements[index];
-        auto nextZoomIndex = source->LoadImage(*element, *entry.PathIndex);
+        auto nextZoomIndex = source->LoadImage(entry, *element, entry.PathIndex.value_or(0));
         while (nextZoomIndex)
         {
             element->zoomed_offset = -static_cast<int32_t>(elements.size() - index);
             auto& zoomElement = elements.emplace_back();
-            nextZoomIndex = source->LoadImage(zoomElement, *nextZoomIndex);
+            nextZoomIndex = source->LoadImage(entry, zoomElement, *nextZoomIndex);
             element = &zoomElement;
             index = elements.size() - 1;
         }
@@ -200,7 +217,7 @@ public:
     {
     }
 
-    std::optional<size_t> LoadImage(rct_g1_element& element, size_t index) override
+    std::optional<size_t> LoadImage(const ImageTable2::Entry& entry, rct_g1_element& element, size_t index) override
     {
         element = _gx.GetImageCopy(index);
         return _gx.GetNextZoomImage(index);
@@ -213,13 +230,13 @@ private:
     std::unique_ptr<Object> _object;
 
 public:
-    ObjectImageSource(ObjectAsset& asset)
+    ObjectImageSource(const ObjectAsset& asset)
     {
         auto& objRepository = GetContext()->GetObjectRepository();
         _object = ObjectFactory::CreateObjectFromLegacyFile(objRepository, asset.GetPath().c_str(), true);
     }
 
-    std::optional<size_t> LoadImage(rct_g1_element& element, size_t index) override
+    std::optional<size_t> LoadImage(const ImageTable2::Entry& entry, rct_g1_element& element, size_t index) override
     {
         const auto& obj = *_object.get();
         auto& gx = obj.GetEmbeddedImages();
@@ -228,56 +245,111 @@ public:
     }
 };
 
+class PngImageSource : public ImageSource
+{
+private:
+    Image _image;
+
+public:
+    PngImageSource(const ObjectAsset& asset)
+    {
+        auto buffer = asset.GetData();
+        _image = Imaging::ReadFromBuffer(buffer, IMAGE_FORMAT::PNG_32);
+    }
+
+    std::optional<size_t> LoadImage(const ImageTable2::Entry& entry, rct_g1_element& element, size_t index) override
+    {
+        ImageImporter imageImporter;
+        auto result = imageImporter.Import(_image, entry.X, entry.Y);
+
+        element = result.Element;
+        element.offset = new uint8_t[result.Buffer.size()];
+        std::memcpy(element.offset, result.Buffer.data(), result.Buffer.size());
+        return {};
+    }
+};
+
+std::string ImageTable2::GetImageSourceKey(const ImageTable2::Entry& entry)
+{
+    switch (entry.Kind)
+    {
+        case SourceKind::G1:
+            return "$G1";
+        case SourceKind::Csg:
+            return "$CSG";
+        case SourceKind::None:
+        case SourceKind::Gx:
+        case SourceKind::ObjData:
+            if (!entry.Asset)
+                return {};
+            return entry.Asset->GetZipPath() + entry.Asset->GetPath();
+        default:
+            return {};
+    }
+}
+
 ImageSource* ImageTable2::GetOrLoadSource(Entry& entry)
 {
-    if (_imageSources.size() == 0)
+    auto key = GetImageSourceKey(entry);
+    if (key == _lastImageSourceKey)
     {
-        std::unique_ptr<ImageSource> source;
-        switch (entry.Kind)
-        {
-            case SourceKind::G1:
-            {
-                auto env = GetContext()->GetPlatformEnvironment();
-                auto dataPath = env->FindFile(DIRBASE::RCT2, DIRID::DATA, "g1.dat");
-                source = std::make_unique<GxImageSource>(std::make_unique<FileStream>(dataPath, FILE_MODE_OPEN));
-                break;
-            }
-            case SourceKind::Csg:
-            {
-                auto env = GetContext()->GetPlatformEnvironment();
-                auto dataPathElements = env->FindFile(DIRBASE::RCT1, DIRID::DATA, "csg1i.dat");
-                auto dataPathData = env->FindFile(DIRBASE::RCT1, DIRID::DATA, "csg1.dat");
-                source = std::make_unique<GxImageSource>(
-                    std::make_unique<FileStream>(dataPathElements, FILE_MODE_OPEN),
-                    std::make_unique<FileStream>(dataPathData, FILE_MODE_OPEN));
-                break;
-            }
-            case SourceKind::Gx:
-            {
-                if (entry.Asset)
-                {
-                    auto stream = entry.Asset->GetStream();
-                    if (stream != nullptr)
-                    {
-                        source = std::make_unique<GxImageSource>(std::move(stream));
-                    }
-                }
-                break;
-            }
-            case SourceKind::ObjData:
-                source = std::make_unique<ObjectImageSource>(*entry.Asset);
-                break;
-            default:
-                break;
-        }
-        if (source != nullptr)
-        {
-            _imageSources.push_back(std::move(source));
-        }
-        else
-        {
-            return nullptr;
-        }
+        return _lastImageSource.get();
     }
-    return _imageSources.back().get();
+
+    _lastImageSourceKey = key;
+    _lastImageSource = CreateImageSource(entry);
+    return _lastImageSource.get();
+}
+
+std::unique_ptr<ImageSource> ImageTable2::CreateImageSource(const Entry& entry)
+{
+    std::unique_ptr<ImageSource> source;
+    switch (entry.Kind)
+    {
+        case SourceKind::None:
+        {
+            if (entry.Asset)
+            {
+                source = std::make_unique<PngImageSource>(*entry.Asset);
+            }
+            break;
+        }
+        case SourceKind::G1:
+        {
+            auto env = GetContext()->GetPlatformEnvironment();
+            auto dataPath = env->FindFile(DIRBASE::RCT2, DIRID::DATA, "g1.dat");
+            source = std::make_unique<GxImageSource>(std::make_unique<FileStream>(dataPath, FILE_MODE_OPEN));
+            break;
+        }
+        case SourceKind::Csg:
+        {
+            auto env = GetContext()->GetPlatformEnvironment();
+            auto dataPathElements = env->FindFile(DIRBASE::RCT1, DIRID::DATA, "csg1i.dat");
+            auto dataPathData = env->FindFile(DIRBASE::RCT1, DIRID::DATA, "csg1.dat");
+            source = std::make_unique<GxImageSource>(
+                std::make_unique<FileStream>(dataPathElements, FILE_MODE_OPEN),
+                std::make_unique<FileStream>(dataPathData, FILE_MODE_OPEN));
+            break;
+        }
+        case SourceKind::Gx:
+        {
+            if (entry.Asset)
+            {
+                auto stream = entry.Asset->GetStream();
+                if (stream != nullptr)
+                {
+                    source = std::make_unique<GxImageSource>(std::move(stream));
+                }
+            }
+            break;
+        }
+        case SourceKind::ObjData:
+        {
+            source = std::make_unique<ObjectImageSource>(*entry.Asset);
+            break;
+        }
+        default:
+            break;
+    }
+    return source;
 }

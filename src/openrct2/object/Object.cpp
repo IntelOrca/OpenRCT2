@@ -394,9 +394,26 @@ std::unique_ptr<IStream> ObjectAsset::GetStream() const
     return {};
 }
 
+const std::string& ObjectAsset::GetZipPath() const
+{
+    return _zipPath;
+}
+
 const std::string& ObjectAsset::GetPath() const
 {
     return _path;
+}
+
+size_t ObjectAsset::GetHash() const
+{
+    auto h1 = std::hash<std::string>{}(_zipPath);
+    auto h2 = std::hash<std::string>{}(_path);
+    return h1 ^ (h2 << 1);
+}
+
+bool operator==(const ObjectAsset& l, const ObjectAsset& r)
+{
+    return l._zipPath == r._zipPath && l._path == r._path;
 }
 
 #ifdef __WARN_SUGGEST_FINAL_METHODS__

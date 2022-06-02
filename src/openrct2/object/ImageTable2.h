@@ -21,16 +21,11 @@ struct rct_g1_element;
 
 namespace OpenRCT2
 {
-    class ImageSource
-    {
-    public:
-        virtual ~ImageSource() = default;
-        virtual std::optional<size_t> LoadImage(rct_g1_element& element, size_t index) = 0;
-    };
+    class ImageSource;
 
     class ImageTable2 : public ResourceTable
     {
-    private:
+    public:
         struct Entry
         {
             SourceKind Kind{};
@@ -40,12 +35,16 @@ namespace OpenRCT2
             int32_t Y{};
         };
 
+    private:
         std::vector<Entry> _entries;
         ImageIndex _baseIndex = ImageIndexUndefined;
         size_t _loadedImageCount{};
-        std::vector<std::unique_ptr<ImageSource>> _imageSources;
+
+        std::string _lastImageSourceKey;
+        std::unique_ptr<ImageSource> _lastImageSource;
 
     public:
+        ImageTable2();
         ~ImageTable2();
 
         std::vector<Entry>& GetEntries();
@@ -88,5 +87,7 @@ namespace OpenRCT2
         static void ReadImageInfoFromJson(IReadObjectContext& context, const json_t& jImage, Entry& entry);
         void ReadEntryFromJson(IReadObjectContext& context, const json_t& jImage);
         ImageSource* GetOrLoadSource(Entry& entry);
+        static std::string GetImageSourceKey(const Entry& entry);
+        static std::unique_ptr<ImageSource> CreateImageSource(const Entry& entry);
     };
 } // namespace OpenRCT2
