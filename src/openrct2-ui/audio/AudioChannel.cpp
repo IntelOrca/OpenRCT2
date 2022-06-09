@@ -223,6 +223,11 @@ namespace OpenRCT2::Audio
             _done = false;
         }
 
+        void Stop() override
+        {
+            SetStopping(true);
+        }
+
         void UpdateOldVolume() override
         {
             _oldvolume = _volume;

@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include "../audio/AudioMixer.h"
-#include "../common.h"
+#include "../audio/audio.h"
 #include "../entity/Yaw.hpp"
 #include "../util/Util.h"
 #include "../world/Location.hpp"
 
 #include <array>
+#include <cstdint>
 #include <string>
 #include <vector>
 
