@@ -264,6 +264,7 @@ private:
     ObjectEntryDescriptor _descriptor{};
     StringTable _stringTable;
     std::unique_ptr<OpenRCT2::ImageTable2> _imageTable;
+    std::unique_ptr<OpenRCT2::ImageTable2> _loadedImageTable;
     OpenRCT2::GxFile _embeddedImages;
     std::vector<ObjectSourceGame> _sourceGames;
     std::vector<std::string> _authors;

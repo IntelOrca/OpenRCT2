@@ -131,12 +131,7 @@ void ImageTable2::LoadFrom(const ImageTable2& table, size_t sourceStartIndex, si
     }
 }
 
-void ImageTable2::Load()
-{
-    LoadFrom(*this, 0, _entries.size());
-}
-
-ImageIndex ImageTable2::LoadImages()
+ImageIndex ImageTable2::Load()
 {
     std::vector<rct_g1_element> images;
     images.resize(_entries.size());

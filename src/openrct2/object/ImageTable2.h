@@ -62,17 +62,12 @@ namespace OpenRCT2
         /**
          * Load all available entries.
          */
-        void Load();
+        ImageIndex Load();
 
         /**
          * Unloads all entries that are currently loaded.
          */
         void Unload();
-
-        /**
-         * Load all the images.
-         */
-        ImageIndex LoadImages();
 
         size_t GetCount() const;
         ImageIndex GetImage(uint32_t index) const;

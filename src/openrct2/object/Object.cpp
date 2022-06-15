@@ -109,6 +109,7 @@ bool ObjectEntryDescriptor::operator!=(const ObjectEntryDescriptor& rhs) const
 Object::Object()
 {
     _imageTable = std::make_unique<ImageTable2>();
+    _loadedImageTable = std::make_unique<ImageTable2>();
 }
 
 Object::~Object()
@@ -127,19 +128,19 @@ void Object::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStream* stream)
 
 ImageTable2* Object::GetImageTable()
 {
-    return _imageTable.get();
+    return _loadedImageTable.get();
 }
 
 const ImageTable2* Object::GetImageTable() const
 {
-    return _imageTable.get();
+    return _loadedImageTable.get();
 }
 
 uint32_t Object::GetNumImages() const
 {
-    if (_imageTable == nullptr)
+    if (_loadedImageTable == nullptr)
         return 0;
-    return _imageTable->GetCount();
+    return _loadedImageTable->GetCount();
 }
 
 void Object::ReadEmbeddedImages(IReadObjectContext& context, IStream& stream)
@@ -151,6 +152,10 @@ void Object::PopulateTablesFromJson(IReadObjectContext* context, json_t& root)
 {
     _stringTable.ReadJson(root);
     _imageTable->ReadFromJson(*context, root);
+
+    // HACK this should not be necessary, but required for StationObject and TerrainSurfaceObject which
+    //      call GetNumImages()
+    _loadedImageTable->LoadFrom(*_imageTable, 0, _imageTable->GetCount());
 }
 
 rct_object_entry Object::ParseObjectEntry(const std::string& s)
@@ -222,19 +227,22 @@ void Object::SetSourceGames(const std::vector<ObjectSourceGame>& sourceGames)
 
 ImageIndex Object::LoadImages()
 {
+    // Start with base images
+    _loadedImageTable->LoadFrom(*_imageTable, 0, _imageTable->GetCount());
+
+    // Override with asset packs
     auto context = GetContext();
     auto assetManager = context->GetAssetPackManager();
     if (assetManager != nullptr)
     {
-        assetManager->LoadImagesForObject(GetIdentifier(), *_imageTable);
+        assetManager->LoadImagesForObject(GetIdentifier(), *_loadedImageTable);
     }
-    _imageTable->Load();
-    return _imageTable->LoadImages();
+    return _loadedImageTable->Load();
 }
 
 void Object::UnloadImages()
 {
-    _imageTable->Unload();
+    _loadedImageTable->Unload();
 }
 
 #ifdef __WARN_SUGGEST_FINAL_METHODS__
