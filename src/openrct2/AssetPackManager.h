@@ -31,8 +31,12 @@ namespace OpenRCT2
         AssetPackManager();
         ~AssetPackManager();
 
+        size_t GetCount() const;
+        AssetPack* GetAssetPack(size_t index);
+
         void Scan();
         void Reload();
+        void Swap(size_t index, size_t otherIndex);
 
         void LoadImagesForObject(std::string_view id, ImageTable2& objectTable);
         void LoadSamplesForObject(std::string_view id, AudioSampleTable& objectTable);

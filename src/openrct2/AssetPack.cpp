@@ -34,6 +34,16 @@ AssetPack::~AssetPack()
 {
 }
 
+bool AssetPack::IsEnabled() const
+{
+    return _enabled;
+}
+
+void AssetPack::SetEnabled(bool value)
+{
+    _enabled = value;
+}
+
 void AssetPack::Fetch()
 {
     auto archive = Zip::Open(Path.u8string(), ZIP_ACCESS::READ);

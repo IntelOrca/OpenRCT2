@@ -29,6 +29,18 @@ AssetPackManager::~AssetPackManager()
 {
 }
 
+size_t AssetPackManager::GetCount() const
+{
+    return _assetPacks.size();
+}
+
+AssetPack* AssetPackManager::GetAssetPack(size_t index)
+{
+    if (index >= _assetPacks.size())
+        return nullptr;
+    return _assetPacks[index].get();
+}
+
 void AssetPackManager::Scan()
 {
     ClearAssetPacks();
@@ -57,11 +69,19 @@ void AssetPackManager::Reload()
     }
 }
 
+void AssetPackManager::Swap(size_t index, size_t otherIndex)
+{
+    if (index < _assetPacks.size() && otherIndex < _assetPacks.size() && index != otherIndex)
+    {
+        std::swap(_assetPacks[index], _assetPacks[otherIndex]);
+    }
+}
+
 void AssetPackManager::LoadImagesForObject(std::string_view id, ImageTable2& objectTable)
 {
     for (auto& assetPack : _assetPacks)
     {
-        if (assetPack->ContainsObject(id))
+        if (assetPack->IsEnabled() && assetPack->ContainsObject(id))
         {
             return assetPack->LoadImagesForObject(id, objectTable);
         }
@@ -72,7 +92,7 @@ void AssetPackManager::LoadSamplesForObject(std::string_view id, AudioSampleTabl
 {
     for (auto& assetPack : _assetPacks)
     {
-        if (assetPack->ContainsObject(id))
+        if (assetPack->IsEnabled() && assetPack->ContainsObject(id))
         {
             return assetPack->LoadSamplesForObject(id, objectTable);
         }

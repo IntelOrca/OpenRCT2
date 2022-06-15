@@ -34,6 +34,7 @@ namespace OpenRCT2
         std::unique_ptr<ImageTable2> _imageTable;
         AudioSampleTable _sampleTable;
         std::vector<Entry> _entries;
+        bool _enabled = true;
 
     public:
         fs::path Path;
@@ -45,6 +46,9 @@ namespace OpenRCT2
         AssetPack(const fs::path& path);
         AssetPack(const AssetPack&) = delete;
         ~AssetPack();
+
+        bool IsEnabled() const;
+        void SetEnabled(bool value);
 
         void Fetch();
         void Load();

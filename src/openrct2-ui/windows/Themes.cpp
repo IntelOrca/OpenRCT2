@@ -227,6 +227,7 @@ static rct_windowclass window_themes_tab_6_classes[] = {
     WC_OPTIONS,
     WC_KEYBOARD_SHORTCUT_LIST,
     WC_CHANGE_KEYBOARD_SHORTCUT,
+    WC_ASSET_PACKS,
     WC_LOADSAVE,
     WC_ABOUT,
     WC_CHANGELOG,

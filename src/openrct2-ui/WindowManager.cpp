@@ -135,6 +135,8 @@ public:
                 return WindowWaterOpen();
             case WC_TRANSPARENCY:
                 return WindowTransparencyOpen();
+            case WC_ASSET_PACKS:
+                return WindowAssetPacksOpen();
             default:
                 Console::Error::WriteLine("Unhandled window class (%d)", wc);
                 return nullptr;
