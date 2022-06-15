@@ -26,6 +26,7 @@ protected:
         Gx,
         G1,
         Csg,
+        Png,
     };
 
     struct SourceInfo

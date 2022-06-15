@@ -57,12 +57,7 @@ namespace OpenRCT2
         /**
          * Load all available entries from the given table.
          */
-        void LoadFrom(const ImageTable2& table, size_t sourceIndex, size_t length);
-
-        /**
-         * Load a specific entry from the given table.
-         */
-        void LoadFrom(const ImageTable2& table, size_t index, size_t sourceIndex, size_t length);
+        void LoadFrom(const ImageTable2& table, size_t sourceStartIndex, size_t length);
 
         /**
          * Load all available entries.

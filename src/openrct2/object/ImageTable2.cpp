@@ -73,6 +73,7 @@ void ImageTable2::ReadEntryFromJson(IReadObjectContext& context, const json_t& j
     else if (jImage.is_object())
     {
         sourceInfo = ParseSource(jImage.at("path").get<std::string>());
+        sourceInfo.Kind = SourceKind::Png;
     }
 
     auto asset = sourceInfo.Path.empty() ? std::nullopt : std::make_optional<ObjectAsset>(context.GetAsset(sourceInfo.Path));
@@ -106,28 +107,27 @@ void ImageTable2::ReadImageInfoFromJson(IReadObjectContext& context, const json_
         entry.Y = jImage.at("y").get<int32_t>();
 }
 
-void ImageTable2::LoadFrom(const ImageTable2& table, size_t sourceIndex, size_t length)
+void ImageTable2::LoadFrom(const ImageTable2& table, size_t sourceStartIndex, size_t length)
 {
-    auto numEntries = std::min(_entries.size(), length);
-    for (size_t i = 0; i < numEntries; i++)
-    {
-        LoadFrom(table, i, sourceIndex, length);
-    }
-}
-
-void ImageTable2::LoadFrom(const ImageTable2& table, size_t index, size_t sourceStartIndex, size_t length)
-{
-    auto& entry = _entries[index];
-    auto sourceIndex = sourceStartIndex + index;
-    if (sourceIndex >= table._entries.size())
-    {
+    // Ensure we stay in bounds of source table
+    if (sourceStartIndex >= table._entries.size())
         return;
+    length = std::min(length, table._entries.size() - sourceStartIndex);
+
+    // Asset packs may allocate more images for an object that original, or original object may
+    // not allocate any images at all.
+    if (_entries.size() < length)
+    {
+        _entries.resize(length);
     }
 
-    const auto& sourceEntry = table._entries[sourceIndex];
-    if (sourceEntry.Kind != SourceKind::None)
+    for (size_t i = 0; i < length; i++)
     {
-        entry = sourceEntry;
+        const auto& sourceEntry = table._entries[sourceStartIndex + i];
+        if (sourceEntry.Kind != SourceKind::None)
+        {
+            _entries[i] = sourceEntry;
+        }
     }
 }
 
@@ -280,6 +280,7 @@ std::string ImageTable2::GetImageSourceKey(const ImageTable2::Entry& entry)
         case SourceKind::None:
         case SourceKind::Gx:
         case SourceKind::ObjData:
+        case SourceKind::Png:
             if (!entry.Asset)
                 return {};
             return entry.Asset->GetZipPath() + entry.Asset->GetPath();
@@ -306,14 +307,6 @@ std::unique_ptr<ImageSource> ImageTable2::CreateImageSource(const Entry& entry)
     std::unique_ptr<ImageSource> source;
     switch (entry.Kind)
     {
-        case SourceKind::None:
-        {
-            if (entry.Asset)
-            {
-                source = std::make_unique<PngImageSource>(*entry.Asset);
-            }
-            break;
-        }
         case SourceKind::G1:
         {
             auto env = GetContext()->GetPlatformEnvironment();
@@ -348,8 +341,18 @@ std::unique_ptr<ImageSource> ImageTable2::CreateImageSource(const Entry& entry)
             source = std::make_unique<ObjectImageSource>(*entry.Asset);
             break;
         }
-        default:
+        case SourceKind::Png:
+        {
+            if (entry.Asset)
+            {
+                source = std::make_unique<PngImageSource>(*entry.Asset);
+            }
             break;
+        }
+        default:
+        {
+            break;
+        }
     }
     return source;
 }
