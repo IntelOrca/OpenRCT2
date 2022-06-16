@@ -34,12 +34,15 @@ void MusicObject::Load()
     GetStringTable().Sort();
     NameStringId = language_allocate_object_string(GetName());
 
+    // Start with base images
+    _loadedSampleTable.LoadFrom(_sampleTable, 0, _sampleTable.GetCount());
+
     // Override samples from asset packs
     auto context = GetContext();
     auto assetManager = context->GetAssetPackManager();
     if (assetManager != nullptr)
     {
-        assetManager->LoadSamplesForObject(GetIdentifier(), _sampleTable);
+        assetManager->LoadSamplesForObject(GetIdentifier(), _loadedSampleTable);
     }
 
     // Load metadata of samples
@@ -200,7 +203,7 @@ const MusicObjectTrack* MusicObject::GetTrack(size_t trackIndex) const
 
 IAudioSource* MusicObject::GetTrackSample(size_t trackIndex) const
 {
-    return _sampleTable.LoadSample(static_cast<uint32_t>(trackIndex));
+    return _loadedSampleTable.LoadSample(static_cast<uint32_t>(trackIndex));
 }
 
 ObjectAsset MusicObject::GetAsset(IReadObjectContext& context, std::string_view path)

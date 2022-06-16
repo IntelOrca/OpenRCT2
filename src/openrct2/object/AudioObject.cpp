@@ -21,19 +21,23 @@ using namespace OpenRCT2::Audio;
 
 void AudioObject::Load()
 {
+    // Start with base images
+    _loadedSampleTable.LoadFrom(_sampleTable, 0, _sampleTable.GetCount());
+
+    // Override samples from asset packs
     auto context = GetContext();
     auto assetManager = context->GetAssetPackManager();
     if (assetManager != nullptr)
     {
-        assetManager->LoadSamplesForObject(GetIdentifier(), _sampleTable);
+        assetManager->LoadSamplesForObject(GetIdentifier(), _loadedSampleTable);
     }
-    _sampleTable.Load();
-    _sampleTable.LoadSamples();
+
+    _loadedSampleTable.Load();
 }
 
 void AudioObject::Unload()
 {
-    _sampleTable.Unload();
+    _loadedSampleTable.Unload();
 }
 
 void AudioObject::ReadJson(IReadObjectContext* context, json_t& root)
@@ -45,10 +49,10 @@ void AudioObject::ReadJson(IReadObjectContext* context, json_t& root)
 
 IAudioSource* AudioObject::GetSample(uint32_t index) const
 {
-    return _sampleTable.GetSample(index);
+    return _loadedSampleTable.GetSample(index);
 }
 
 int32_t AudioObject::GetSampleModifier(uint32_t index) const
 {
-    return _sampleTable.GetSampleModifier(index);
+    return _loadedSampleTable.GetSampleModifier(index);
 }

@@ -43,11 +43,6 @@ public:
     void LoadFrom(const AudioSampleTable& table, size_t sourceIndex, size_t length);
 
     /**
-     * Load a specific entry from the given table.
-     */
-    void LoadFrom(const AudioSampleTable& table, size_t index, size_t sourceIndex, size_t length);
-
-    /**
      * Load all available entries.
      */
     void Load();
@@ -56,11 +51,6 @@ public:
      * Unloads all entries that are currently loaded.
      */
     void Unload();
-
-    /**
-     * Load all the samples.
-     */
-    void LoadSamples();
 
     size_t GetCount() const;
     OpenRCT2::Audio::IAudioSource* GetSample(uint32_t index) const;

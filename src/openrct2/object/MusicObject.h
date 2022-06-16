@@ -48,6 +48,7 @@ private:
     std::optional<uint8_t> _originalStyleId;
     MusicNiceFactor _niceFactor;
     AudioSampleTable _sampleTable;
+    AudioSampleTable _loadedSampleTable;
 
 public:
     rct_string_id NameStringId{};

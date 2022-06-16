@@ -69,48 +69,38 @@ void AudioSampleTable::ReadFromJson(IReadObjectContext* context, const json_t& r
     }
 }
 
-void AudioSampleTable::LoadFrom(const AudioSampleTable& table, size_t sourceIndex, size_t length)
+void AudioSampleTable::LoadFrom(const AudioSampleTable& table, size_t sourceStartIndex, size_t length)
 {
-    auto numEntries = std::min(_entries.size(), length);
-    for (size_t i = 0; i < numEntries; i++)
-    {
-        LoadFrom(table, i, sourceIndex, length);
-    }
-}
-
-void AudioSampleTable::LoadFrom(const AudioSampleTable& table, size_t index, size_t sourceStartIndex, size_t length)
-{
-    auto& entry = _entries[index];
-    if (entry.Source != nullptr)
-    {
+    // Ensure we stay in bounds of source table
+    if (sourceStartIndex >= table._entries.size())
         return;
+    length = std::min(length, table._entries.size() - sourceStartIndex);
+
+    // Asset packs may allocate more images for an object that original, or original object may
+    // not allocate any images at all.
+    if (_entries.size() < length)
+    {
+        _entries.resize(length);
     }
 
-    auto sourceIndex = sourceStartIndex + index;
-    if (sourceIndex >= table._entries.size())
+    for (size_t i = 0; i < length; i++)
     {
-        return;
-    }
-
-    const auto& sourceEntry = table._entries[sourceIndex];
-    if (sourceEntry.Asset)
-    {
-        auto stream = sourceEntry.Asset->GetStream();
-        if (stream != nullptr)
+        const auto& sourceEntry = table._entries[sourceStartIndex + i];
+        if (sourceEntry.Asset)
         {
-            entry.Asset = sourceEntry.Asset;
-            entry.PathIndex = sourceEntry.PathIndex;
-            entry.Modifier = sourceEntry.Modifier;
+            auto stream = sourceEntry.Asset->GetStream();
+            if (stream != nullptr)
+            {
+                auto& entry = _entries[i];
+                entry.Asset = sourceEntry.Asset;
+                entry.PathIndex = sourceEntry.PathIndex;
+                entry.Modifier = sourceEntry.Modifier;
+            }
         }
     }
 }
 
 void AudioSampleTable::Load()
-{
-    LoadFrom(*this, 0, _entries.size());
-}
-
-void AudioSampleTable::LoadSamples()
 {
     auto audioContext = GetContext()->GetAudioContext();
     for (size_t i = 0; i < _entries.size(); i++)
