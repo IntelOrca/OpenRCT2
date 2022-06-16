@@ -139,7 +139,7 @@ ImageIndex ImageTable2::Load()
     {
         LoadImage(images, i);
     }
-    _baseIndex = gfx_object_allocate_images(images.data(), images.size());
+    _baseIndex = gfx_object_allocate_images(images.data(), static_cast<uint32_t>(images.size()));
     if (_baseIndex != ImageIndexUndefined)
     {
         _loadedImageCount = images.size();
@@ -153,11 +153,11 @@ void ImageTable2::Unload()
     {
         for (size_t i = 0; i < _loadedImageCount; i++)
         {
-            auto el = const_cast<rct_g1_element*>(gfx_get_g1_element(_baseIndex + i));
+            auto el = const_cast<rct_g1_element*>(gfx_get_g1_element(static_cast<ImageIndex>(_baseIndex + i)));
             delete[] el->offset;
             el->offset = nullptr;
         }
-        gfx_object_free_images(_baseIndex, _loadedImageCount);
+        gfx_object_free_images(_baseIndex, static_cast<uint32_t>(_loadedImageCount));
         _baseIndex = ImageIndexUndefined;
         _loadedImageCount = 0;
     }

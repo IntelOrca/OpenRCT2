@@ -92,7 +92,7 @@ public:
         if (assetPackManager != nullptr)
         {
             auto numAssetPacks = assetPackManager->GetCount();
-            result.height = numAssetPacks * SCROLLABLE_ROW_HEIGHT;
+            result.height = static_cast<int32_t>(numAssetPacks * SCROLLABLE_ROW_HEIGHT);
         }
 
         if (_highlightedIndex)

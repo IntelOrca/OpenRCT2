@@ -27,7 +27,7 @@ GxFile::GxFile(IStream& stream)
     {
         auto src = stream.ReadValue<rct_g1_element_32bit>();
         auto& dst = _elements[i];
-        dst.offset = reinterpret_cast<uint8_t*>(src.offset);
+        dst.offset = reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(src.offset));
         dst.width = src.width;
         dst.height = src.height;
         dst.x_offset = src.x_offset;

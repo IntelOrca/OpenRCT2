@@ -682,6 +682,7 @@
     <ClCompile Include="drawing\Drawing.Sprite.RLE.cpp" />
     <ClCompile Include="drawing\Drawing.String.cpp" />
     <ClCompile Include="drawing\Font.cpp" />
+    <ClCompile Include="drawing\Gx.cpp" />
     <ClCompile Include="drawing\Image.cpp" />
     <ClCompile Include="drawing\ImageImporter.cpp" />
     <ClCompile Include="drawing\LightFX.cpp" />
@@ -769,7 +770,7 @@
     <ClCompile Include="object\FootpathObject.cpp" />
     <ClCompile Include="object\FootpathRailingsObject.cpp" />
     <ClCompile Include="object\FootpathSurfaceObject.cpp" />
-    <ClCompile Include="object\ImageTable.cpp" />
+    <ClCompile Include="object\ImageTable2.cpp" />
     <ClCompile Include="object\LargeSceneryObject.cpp" />
     <ClCompile Include="object\MusicObject.cpp" />
     <ClCompile Include="object\Object.cpp" />
@@ -777,6 +778,7 @@
     <ClCompile Include="object\ObjectList.cpp" />
     <ClCompile Include="object\ObjectManager.cpp" />
     <ClCompile Include="object\ObjectRepository.cpp" />
+    <ClCompile Include="object\ResourceTable.cpp" />
     <ClCompile Include="object\RideObject.cpp" />
     <ClCompile Include="object\SceneryGroupObject.cpp" />
     <ClCompile Include="object\SceneryObject.cpp" />

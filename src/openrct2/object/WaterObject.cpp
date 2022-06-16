@@ -52,7 +52,7 @@ void WaterObject::Load()
 {
     GetStringTable().Sort();
     _legacyType.string_idx = language_allocate_object_string(GetName());
-    _legacyType.image_id = gfx_object_allocate_images(_palettes.data(), _palettes.size());
+    _legacyType.image_id = gfx_object_allocate_images(_palettes.data(), static_cast<uint32_t>(_palettes.size()));
     _legacyType.palette_index_1 = _legacyType.image_id + 1;
     _legacyType.palette_index_2 = _legacyType.image_id + 4;
 
@@ -61,7 +61,7 @@ void WaterObject::Load()
 
 void WaterObject::Unload()
 {
-    gfx_object_free_images(_legacyType.image_id, _palettes.size());
+    gfx_object_free_images(_legacyType.image_id, static_cast<uint32_t>(_palettes.size()));
     language_free_object_string(_legacyType.string_idx);
 
     _legacyType.string_idx = 0;

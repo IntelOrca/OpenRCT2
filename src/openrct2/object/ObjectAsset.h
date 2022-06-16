@@ -16,7 +16,7 @@
 
 namespace OpenRCT2
 {
-    class IStream;
+    struct IStream;
 }
 
 class ObjectAsset

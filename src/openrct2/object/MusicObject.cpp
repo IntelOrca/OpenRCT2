@@ -200,7 +200,7 @@ const MusicObjectTrack* MusicObject::GetTrack(size_t trackIndex) const
 
 IAudioSource* MusicObject::GetTrackSample(size_t trackIndex) const
 {
-    return _sampleTable.LoadSample(trackIndex);
+    return _sampleTable.LoadSample(static_cast<uint32_t>(trackIndex));
 }
 
 ObjectAsset MusicObject::GetAsset(IReadObjectContext& context, std::string_view path)

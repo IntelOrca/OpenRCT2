@@ -140,7 +140,7 @@ uint32_t Object::GetNumImages() const
 {
     if (_loadedImageTable == nullptr)
         return 0;
-    return _loadedImageTable->GetCount();
+    return static_cast<uint32_t>(_loadedImageTable->GetCount());
 }
 
 void Object::ReadEmbeddedImages(IReadObjectContext& context, IStream& stream)

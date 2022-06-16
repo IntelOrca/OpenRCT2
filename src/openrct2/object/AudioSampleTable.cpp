@@ -118,7 +118,7 @@ void AudioSampleTable::LoadSamples()
         auto& entry = _entries[i];
         if (entry.Source == nullptr)
         {
-            entry.Source = LoadSample(i);
+            entry.Source = LoadSample(static_cast<uint32_t>(i));
         }
     }
 }

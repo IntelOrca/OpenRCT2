@@ -26,13 +26,6 @@ template<typename T> struct Range
         T Value{};
         T Change{};
 
-    public:
-        // using difference_type = intptr_t;
-        using value_type = T;
-        using pointer = const T*;
-        using reference = const T&;
-        using iterator_category = std::forward_iterator_tag;
-
     private:
         Iterator(const Range& range, T initialValue)
             : Lower(range.Lower)
