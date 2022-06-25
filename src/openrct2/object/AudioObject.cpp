@@ -42,7 +42,7 @@ void AudioObject::Unload()
 
 void AudioObject::ReadJson(IReadObjectContext* context, json_t& root)
 {
-    Guard::Assert(root.is_object(), "BannerObject::ReadJson expects parameter root to be object");
+    Guard::Assert(root.is_object(), "AudioObject::ReadJson expects parameter root to be object");
     _sampleTable.ReadFromJson(context, root);
     PopulateTablesFromJson(context, root);
 }
