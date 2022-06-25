@@ -9,14 +9,24 @@
 
 #include "Image.h"
 
+#include "../Context.h"
 #include "../OpenRCT2.h"
 #include "../core/Console.hpp"
 #include "../core/Guard.hpp"
+#include "../object/ImageObject.h"
+#include "../object/ObjectManager.h"
 #include "../sprites.h"
 #include "Drawing.h"
 
 #include <algorithm>
 #include <list>
+
+using namespace OpenRCT2;
+
+namespace ImageObjectIdentifiers
+{
+    constexpr std::string_view Rct2Interface = "rct2.image.interface";
+} // namespace ImageObjectIdentifiers
 
 constexpr uint32_t BASE_IMAGE_ID = SPR_IMAGE_LIST_BEGIN;
 constexpr uint32_t MAX_IMAGES = SPR_IMAGE_LIST_END - BASE_IMAGE_ID;
@@ -25,6 +35,8 @@ constexpr uint32_t INVALID_IMAGE_ID = UINT32_MAX;
 static bool _initialised = false;
 static std::list<ImageList> _freeLists;
 static uint32_t _allocatedImageCount;
+
+static ImageIndex _interfaceBaseIndex = ImageIndexUndefined;
 
 #ifdef DEBUG_LEVEL_1
 static std::list<ImageList> _allocatedLists;
@@ -254,4 +266,26 @@ size_t ImageListGetMaximum()
 const std::list<ImageList>& GetAvailableAllocationRanges()
 {
     return _freeLists;
+}
+
+void LoadImageObjects()
+{
+    auto& objManager = GetContext()->GetObjectManager();
+    auto* interfaceObj = reinterpret_cast<ImageObject*>(objManager.LoadObject(ImageObjectIdentifiers::Rct2Interface));
+    if (interfaceObj != nullptr)
+    {
+        _interfaceBaseIndex = interfaceObj->GetImage(0);
+    }
+}
+
+ImageIndex GetImageIndex(ImageGroup group, ImageIndex index)
+{
+    if (group == ImageGroup::Interface)
+    {
+        if (_interfaceBaseIndex != ImageIndexUndefined)
+        {
+            return _interfaceBaseIndex + index;
+        }
+    }
+    return ImageIndexUndefined;
 }

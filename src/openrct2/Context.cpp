@@ -813,6 +813,8 @@ namespace OpenRCT2
 
         bool LoadBaseGraphics()
         {
+            LoadImageObjects();
+
             if (!gfx_load_g1(*_env))
             {
                 return false;

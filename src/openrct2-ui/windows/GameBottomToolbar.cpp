@@ -17,6 +17,7 @@
 #include <openrct2/Input.h>
 #include <openrct2/OpenRCT2.h>
 #include <openrct2/config/Config.h>
+#include <openrct2/drawing/Image.h>
 #include <openrct2/entity/EntityRegistry.h>
 #include <openrct2/entity/Guest.h>
 #include <openrct2/entity/Staff.h>
@@ -542,7 +543,8 @@ static void WindowGameBottomToolbarDrawRightPanel(rct_drawpixelinfo* dpi, rct_wi
     {
         if (gClimateUpdateTimer < 960)
         {
-            gfx_draw_sprite(dpi, ImageId(SPR_NEXT_WEATHER), screenCoords + ScreenCoordsXY{ 27, 5 });
+            auto nextArrowImageIndex = GetImageIndex(ImageGroup::Interface, 0);
+            gfx_draw_sprite(dpi, ImageId(nextArrowImageIndex), screenCoords + ScreenCoordsXY{ 27, 5 });
             gfx_draw_sprite(dpi, ImageId(nextWeatherSpriteId), screenCoords + ScreenCoordsXY{ 40, 0 });
         }
     }

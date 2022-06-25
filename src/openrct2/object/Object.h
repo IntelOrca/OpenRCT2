@@ -49,6 +49,7 @@ enum class ObjectType : uint8_t
     FootpathSurface,
     FootpathRailings,
     Audio,
+    Image,
 
     Count,
     None = 255
@@ -75,6 +76,7 @@ constexpr std::array<ObjectType, EnumValue(ObjectType::Count)> ObjectTypes = {
     ObjectType::FootpathSurface,
     ObjectType::FootpathRailings,
     ObjectType::Audio,
+    ObjectType::Image,
 };
 
 // Object types that can be saved in a park file.
@@ -408,5 +410,5 @@ const Object* object_entry_get_object(ObjectType objectType, ObjectEntryIndex in
 
 constexpr bool IsIntransientObjectType(ObjectType type)
 {
-    return type == ObjectType::Audio;
+    return type == ObjectType::Audio || type == ObjectType::Image;
 }
