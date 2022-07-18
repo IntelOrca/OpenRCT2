@@ -11,7 +11,6 @@
 
 #include "../core/IStream.hpp"
 #include "../core/Json.hpp"
-#include "../drawing/Image.h"
 
 void FootpathRailingsObject::Load()
 {
@@ -21,7 +20,7 @@ void FootpathRailingsObject::Load()
     auto numImages = GetImageTable().GetCount();
     if (numImages != 0)
     {
-        PreviewImageId = gfx_object_allocate_images(GetImageTable().GetImages(), GetImageTable().GetCount());
+        PreviewImageId = LoadImages();
         BridgeImageId = PreviewImageId + 37;
         RailingsImageId = PreviewImageId + 1;
     }
@@ -39,7 +38,7 @@ void FootpathRailingsObject::Load()
 void FootpathRailingsObject::Unload()
 {
     language_free_object_string(NameStringId);
-    gfx_object_free_images(PreviewImageId, GetImageTable().GetCount());
+    UnloadImages();
 
     NameStringId = 0;
     PreviewImageId = 0;

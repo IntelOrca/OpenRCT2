@@ -15,6 +15,7 @@
 #include "../core/Memory.hpp"
 #include "../core/String.hpp"
 #include "../core/ZipStream.hpp"
+#include "../drawing/Image.h"
 #include "../localisation/Language.h"
 #include "../localisation/LocalisationService.h"
 #include "../localisation/StringIds.h"
@@ -194,6 +195,23 @@ std::string Object::GetName() const
 std::string Object::GetName(int32_t language) const
 {
     return GetString(language, ObjectStringID::NAME);
+}
+
+ImageIndex Object::LoadImages()
+{
+    if (_baseImageId == ImageIndexUndefined)
+    {
+        _baseImageId = gfx_object_allocate_images(GetImageTable().GetImages(), GetImageTable().GetCount());
+    }
+    return _baseImageId;
+}
+
+void Object::UnloadImages()
+{
+    if (_baseImageId != ImageIndexUndefined)
+    {
+        gfx_object_free_images(_baseImageId, GetImageTable().GetCount());
+    }
 }
 
 void rct_object_entry::SetName(std::string_view value)

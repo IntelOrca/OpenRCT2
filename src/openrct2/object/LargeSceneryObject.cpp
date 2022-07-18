@@ -15,7 +15,6 @@
 #include "../core/Json.hpp"
 #include "../core/Memory.hpp"
 #include "../drawing/Drawing.h"
-#include "../drawing/Image.h"
 #include "../interface/Cursors.h"
 #include "../localisation/Language.h"
 #include "../world/Banner.h"
@@ -82,7 +81,7 @@ void LargeSceneryObject::Load()
 {
     GetStringTable().Sort();
     _legacyType.name = language_allocate_object_string(GetName());
-    _baseImageId = gfx_object_allocate_images(GetImageTable().GetImages(), GetImageTable().GetCount());
+    _baseImageId = LoadImages();
     _legacyType.image = _baseImageId;
 
     _legacyType.tiles = _tiles.data();
@@ -105,7 +104,7 @@ void LargeSceneryObject::Load()
 void LargeSceneryObject::Unload()
 {
     language_free_object_string(_legacyType.name);
-    gfx_object_free_images(_baseImageId, GetImageTable().GetCount());
+    UnloadImages();
 
     _legacyType.name = 0;
     _baseImageId = _legacyType.image = 0;

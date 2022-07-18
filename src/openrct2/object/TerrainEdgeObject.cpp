@@ -14,7 +14,6 @@
 #include "../core/Json.hpp"
 #include "../core/String.hpp"
 #include "../drawing/Drawing.h"
-#include "../drawing/Image.h"
 #include "../localisation/Localisation.h"
 #include "ObjectManager.h"
 
@@ -22,7 +21,7 @@ void TerrainEdgeObject::Load()
 {
     GetStringTable().Sort();
     NameStringId = language_allocate_object_string(GetName());
-    IconImageId = gfx_object_allocate_images(GetImageTable().GetImages(), GetImageTable().GetCount());
+    IconImageId = LoadImages();
 
     // First image is icon followed by edge images
     BaseImageId = IconImageId + 1;
@@ -31,7 +30,7 @@ void TerrainEdgeObject::Load()
 void TerrainEdgeObject::Unload()
 {
     language_free_object_string(NameStringId);
-    gfx_object_free_images(IconImageId, GetImageTable().GetCount());
+    UnloadImages();
 
     NameStringId = 0;
     IconImageId = 0;
