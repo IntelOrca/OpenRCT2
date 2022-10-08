@@ -14,8 +14,14 @@
 #include <cstddef>
 #include <cstdint>
 #include <list>
+#include <string_view>
 
 struct rct_g1_element;
+
+enum class ImageGroup
+{
+    Interface
+};
 
 struct ImageList
 {
@@ -61,3 +67,5 @@ void gfx_object_check_all_images_freed();
 size_t ImageListGetUsedCount();
 size_t ImageListGetMaximum();
 const std::list<ImageList>& GetAvailableAllocationRanges();
+void LoadImageObjects();
+ImageIndex GetImageIndex(ImageGroup group, ImageIndex index);

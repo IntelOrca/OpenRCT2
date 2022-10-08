@@ -25,7 +25,7 @@ void TerrainSurfaceObject::Load()
 {
     GetStringTable().Sort();
     NameStringId = language_allocate_object_string(GetName());
-    IconImageId = gfx_object_allocate_images(GetImageTable().GetImages(), GetImageTable().GetCount());
+    IconImageId = LoadImages();
     if ((Flags & SMOOTH_WITH_SELF) || (Flags & SMOOTH_WITH_OTHER))
     {
         PatternBaseImageId = IconImageId + 1;
@@ -35,18 +35,18 @@ void TerrainSurfaceObject::Load()
     {
         EntryBaseImageId = IconImageId + 1;
     }
-    NumEntries = (GetImageTable().GetCount() - EntryBaseImageId) / NUM_IMAGES_IN_ENTRY;
+    NumEntries = (GetNumImages() - EntryBaseImageId) / NUM_IMAGES_IN_ENTRY;
 }
 
 void TerrainSurfaceObject::Unload()
 {
     language_free_object_string(NameStringId);
-    gfx_object_free_images(IconImageId, GetImageTable().GetCount());
+    UnloadImages();
 
     NameStringId = 0;
-    IconImageId = 0;
-    PatternBaseImageId = 0;
-    EntryBaseImageId = 0;
+    IconImageId = ImageIndexUndefined;
+    PatternBaseImageId = ImageIndexUndefined;
+    EntryBaseImageId = ImageIndexUndefined;
     NumEntries = 0;
 }
 

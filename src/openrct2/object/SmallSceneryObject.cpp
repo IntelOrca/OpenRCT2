@@ -11,6 +11,8 @@
 
 #include "SmallSceneryObject.h"
 
+#include "../AssetPackManager.h"
+#include "../Context.h"
 #include "../core/IStream.hpp"
 #include "../core/Json.hpp"
 #include "../core/Memory.hpp"
@@ -23,6 +25,8 @@
 #include "../world/SmallScenery.h"
 
 #include <algorithm>
+
+using namespace OpenRCT2;
 
 void SmallSceneryObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStream* stream)
 {
@@ -53,7 +57,7 @@ void SmallSceneryObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStre
         _legacyType.flags |= SMALL_SCENERY_FLAG_IS_TREE;
     }
 
-    GetImageTable().Read(context, stream);
+    ReadEmbeddedImages(*context, *stream);
 
     // Validate properties
     if (_legacyType.price <= 0)
@@ -75,7 +79,7 @@ void SmallSceneryObject::Load()
 {
     GetStringTable().Sort();
     _legacyType.name = language_allocate_object_string(GetName());
-    _legacyType.image = gfx_object_allocate_images(GetImageTable().GetImages(), GetImageTable().GetCount());
+    _legacyType.image = LoadImages();
 
     _legacyType.scenery_tab_id = OBJECT_ENTRY_INDEX_NULL;
 
@@ -90,10 +94,10 @@ void SmallSceneryObject::Load()
 void SmallSceneryObject::Unload()
 {
     language_free_object_string(_legacyType.name);
-    gfx_object_free_images(_legacyType.image, GetImageTable().GetCount());
+    UnloadImages();
 
     _legacyType.name = 0;
-    _legacyType.image = 0;
+    _legacyType.image = ImageIndexUndefined;
 }
 
 void SmallSceneryObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t height) const

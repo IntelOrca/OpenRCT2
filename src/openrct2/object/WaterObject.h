@@ -9,17 +9,22 @@
 
 #pragma once
 
+#include "../drawing/Drawing.h"
 #include "../world/Water.h"
 #include "Object.h"
 
 #include <tuple>
+#include <vector>
 
 class WaterObject final : public Object
 {
 private:
+    std::vector<rct_g1_element> _palettes{};
     rct_water_type _legacyType = {};
 
 public:
+    ~WaterObject();
+
     void* GetLegacyData() override
     {
         return &_legacyType;

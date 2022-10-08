@@ -21,6 +21,7 @@
 #include "actions/ResultWithMessage.h"
 #include "audio/audio.h"
 #include "core/Path.hpp"
+#include "drawing/Image.h"
 #include "entity/EntityList.h"
 #include "entity/EntityRegistry.h"
 #include "entity/Guest.h"
@@ -82,6 +83,7 @@ namespace Editor
         objectRepository.LoadOrConstruct(localisationService.GetCurrentLanguage());
 
         Audio::LoadAudioObjects();
+        LoadImageObjects();
 
         // Reset loaded objects to just defaults
         // Load minimum required objects (like surface and edge)

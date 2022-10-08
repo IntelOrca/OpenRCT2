@@ -15,6 +15,7 @@
 #include "core/Zip.h"
 #include "drawing/Image.h"
 #include "localisation/LocalisationService.h"
+#include "object/ImageTable2.h"
 #include "object/Object.h"
 
 #include <algorithm>
@@ -26,6 +27,7 @@ constexpr std::string_view ManifestFileName = "manifest.json";
 AssetPack::AssetPack(const fs::path& path)
     : Path(path)
 {
+    _imageTable = std::make_unique<ImageTable2>();
 }
 
 AssetPack::~AssetPack()
@@ -91,6 +93,15 @@ bool AssetPack::ContainsObject(std::string_view id) const
 {
     auto it = std::find_if(_entries.begin(), _entries.end(), [id](const Entry& entry) { return entry.ObjectId == id; });
     return it != _entries.end();
+}
+
+void AssetPack::LoadImagesForObject(std::string_view id, ImageTable2& objectTable)
+{
+    auto it = std::find_if(_entries.begin(), _entries.end(), [id](const Entry& entry) { return entry.ObjectId == id; });
+    if (it != _entries.end())
+    {
+        objectTable.LoadFrom(*_imageTable, it->TableIndex, it->TableLength);
+    }
 }
 
 void AssetPack::LoadSamplesForObject(std::string_view id, AudioSampleTable& objectTable)
@@ -178,7 +189,13 @@ void AssetPack::Load()
         Entry entry;
         entry.ObjectId = jObject["id"].get<std::string>();
 
-        if (jObject.contains("samples"))
+        if (jObject.contains("images"))
+        {
+            entry.TableIndex = _imageTable->GetCount();
+            _imageTable->ReadFromJson(loadContext, jObject);
+            entry.TableLength = _imageTable->GetCount() - entry.TableIndex;
+        }
+        else if (jObject.contains("samples"))
         {
             entry.TableIndex = _sampleTable.GetCount();
             _sampleTable.ReadFromJson(&loadContext, jObject);

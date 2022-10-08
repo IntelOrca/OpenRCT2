@@ -12,6 +12,7 @@
 #include "../common.h"
 #include "../core/JsonFwd.hpp"
 #include "../core/String.hpp"
+#include "../drawing/Gx.h"
 #include "../util/Util.h"
 #include "ImageTable.h"
 #include "ObjectAsset.h"
@@ -50,6 +51,7 @@ enum class ObjectType : uint8_t
     FootpathSurface,
     FootpathRailings,
     Audio,
+    Image,
 
     Count,
     None = 255
@@ -74,6 +76,7 @@ constexpr std::array ObjectTypes = {
     ObjectType::FootpathSurface,
     ObjectType::FootpathRailings,
     ObjectType::Audio,
+    ObjectType::Image,
 };
 static_assert(ObjectTypes.size() == EnumValue(ObjectType::Count));
 
@@ -210,8 +213,9 @@ struct ObjectEntryDescriptor
 struct IObjectRepository;
 namespace OpenRCT2
 {
+    class ImageTable2;
     struct IStream;
-}
+} // namespace OpenRCT2
 struct ObjectRepositoryItem;
 struct rct_drawpixelinfo;
 
@@ -252,11 +256,12 @@ private:
     std::string _identifier;
     ObjectEntryDescriptor _descriptor{};
     StringTable _stringTable;
-    ImageTable _imageTable;
+    std::unique_ptr<OpenRCT2::ImageTable2> _imageTable;
+    std::unique_ptr<OpenRCT2::ImageTable2> _loadedImageTable;
+    OpenRCT2::GxFile _embeddedImages;
     std::vector<ObjectSourceGame> _sourceGames;
     std::vector<std::string> _authors;
     ObjectGeneration _generation{};
-    bool _usesFallbackImages{};
 
 protected:
     StringTable& GetStringTable()
@@ -267,10 +272,9 @@ protected:
     {
         return _stringTable;
     }
-    ImageTable& GetImageTable()
-    {
-        return _imageTable;
-    }
+    OpenRCT2::ImageTable2* GetImageTable();
+
+    void ReadEmbeddedImages(IReadObjectContext& context, OpenRCT2::IStream& stream);
 
     /**
      * Populates the image and string tables from a JSON object
@@ -284,8 +288,12 @@ protected:
     std::string GetString(ObjectStringID index) const;
     std::string GetString(int32_t language, ObjectStringID index) const;
 
+    ImageIndex LoadImages();
+    void UnloadImages();
+
 public:
-    virtual ~Object() = default;
+    Object();
+    virtual ~Object();
 
     std::string_view GetIdentifier() const
     {
@@ -318,11 +326,6 @@ public:
     void SetDescriptor(const ObjectEntryDescriptor& value)
     {
         _descriptor = value;
-    }
-
-    constexpr bool UsesFallbackImages() const
-    {
-        return _usesFallbackImages;
     }
 
     // Legacy data structures
@@ -364,18 +367,17 @@ public:
     const std::vector<std::string>& GetAuthors() const;
     void SetAuthors(std::vector<std::string>&& authors);
 
-    const ImageTable& GetImageTable() const
-    {
-        return _imageTable;
-    }
+    const OpenRCT2::ImageTable2* GetImageTable() const;
 
     ObjectEntryDescriptor GetScgWallsHeader() const;
     ObjectEntryDescriptor GetScgPathXHeader() const;
     rct_object_entry CreateHeader(const char name[9], uint32_t flags, uint32_t checksum);
 
-    uint32_t GetNumImages() const
+    uint32_t GetNumImages() const;
+
+    const OpenRCT2::Gx& GetEmbeddedImages() const
     {
-        return GetImageTable().GetCount();
+        return _embeddedImages;
     }
 };
 #ifdef __WARN_SUGGEST_FINAL_TYPES__
@@ -395,5 +397,5 @@ const Object* object_entry_get_object(ObjectType objectType, ObjectEntryIndex in
 
 constexpr bool IsIntransientObjectType(ObjectType type)
 {
-    return type == ObjectType::Audio;
+    return type == ObjectType::Audio || type == ObjectType::Image;
 }

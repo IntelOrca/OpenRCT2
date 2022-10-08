@@ -18,6 +18,7 @@
 #include "../audio/audio.h"
 #include "../config/Config.h"
 #include "../drawing/Drawing.h"
+#include "../drawing/Image.h"
 #include "../interface/Window.h"
 #include "../localisation/Date.h"
 #include "../profiling/Profiling.h"
@@ -274,6 +275,8 @@ uint32_t ClimateGetWeatherSpriteId(const ClimateState& state)
     {
         spriteId = ClimateWeatherData[EnumValue(state.Weather)].SpriteId;
     }
+
+    spriteId = GetImageIndex(ImageGroup::Interface, spriteId - SPR_NEXT_WEATHER);
     return spriteId;
 }
 

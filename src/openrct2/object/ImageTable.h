@@ -9,12 +9,14 @@
 
 #pragma once
 
-#include "../common.h"
-#include "../core/JsonFwd.hpp"
-#include "../drawing/Drawing.h"
+#ifdef OLD_IMAGE_TABLE
 
-#include <memory>
-#include <vector>
+#    include "../common.h"
+#    include "../core/JsonFwd.hpp"
+#    include "../drawing/Drawing.h"
+
+#    include <memory>
+#    include <vector>
 
 struct Image;
 struct IReadObjectContext;
@@ -69,3 +71,5 @@ public:
     }
     void AddImage(const rct_g1_element* g1);
 };
+
+#endif

@@ -19,10 +19,10 @@ void FootpathSurfaceObject::Load()
     GetStringTable().Sort();
     NameStringId = language_allocate_object_string(GetName());
 
-    auto numImages = GetImageTable().GetCount();
+    auto numImages = GetNumImages();
     if (numImages != 0)
     {
-        PreviewImageId = gfx_object_allocate_images(GetImageTable().GetImages(), GetImageTable().GetCount());
+        PreviewImageId = LoadImages();
         BaseImageId = PreviewImageId + 1;
     }
 
@@ -35,11 +35,11 @@ void FootpathSurfaceObject::Load()
 void FootpathSurfaceObject::Unload()
 {
     language_free_object_string(NameStringId);
-    gfx_object_free_images(PreviewImageId, GetImageTable().GetCount());
+    UnloadImages();
 
     NameStringId = 0;
-    PreviewImageId = 0;
-    BaseImageId = 0;
+    PreviewImageId = ImageIndexUndefined;
+    BaseImageId = ImageIndexUndefined;
 }
 
 void FootpathSurfaceObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t height) const
